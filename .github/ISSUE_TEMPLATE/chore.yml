@@ -1,0 +1,29 @@
+name: 🔧 Chore
+description: 설정, 빌드, 의존성 등 작업
+title: "[CHORE] "
+labels: ["chore"]
+
+body:
+  - type: textarea
+    attributes:
+      label: 🔧 작업 내용
+      description: 수행해야 할 작업을 작성해 주세요.
+      placeholder: 예) 의존성 설정 변경, CI 스크립트 수정
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: 🎯 작업 목적
+      description: 왜 이 작업이 필요한지 작성해 주세요.
+      placeholder: 유지보수, 안정성, 개발 편의성 향상 등
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: ⚠️ 영향 범위
+      description: 기능/배포에 영향이 있는지 작성해 주세요.
+      placeholder: |
+        - 기능 영향 없음
+        - 배포 영향 없음

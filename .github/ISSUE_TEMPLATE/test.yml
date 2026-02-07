@@ -1,0 +1,36 @@
+name: 🧪 Test
+description: 테스트 코드 추가/수정
+title: "[TEST] "
+labels: ["test"]
+
+body:
+  - type: textarea
+    attributes:
+      label: 🧪 테스트 대상
+      description: 테스트가 필요한 대상이나 기능을 작성해 주세요.
+      placeholder: 예) UserService 로그인 로직
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: 📌 테스트 목적
+      description: 무엇을 검증하기 위한 테스트인지 작성해 주세요.
+      placeholder: 예) 정상 케이스 / 예외 처리 검증
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: ✅ 완료 기준
+      description: 테스트 완료로 판단할 기준을 작성해 주세요.
+      placeholder: |
+        - 테스트 케이스 작성 완료
+        - 기존 테스트 통과
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: 🙋🏻 참고 사항
+      description: 관련 이슈, 문서, 테스트 전략이 있다면 작성해 주세요.
