@@ -1,0 +1,45 @@
+name: ♻️ Refactor
+description: 코드 구조 개선 및 리팩토링
+title: "[REFACTOR] "
+labels: ["refactor"]
+
+body:
+  - type: textarea
+    attributes:
+      label: ♻️ 리팩토링 대상
+      description: 리팩토링이 필요한 코드나 영역을 작성해 주세요.
+      placeholder: 예) UserService 로그인 로직
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: ❗ 문제점
+      description: 현재 코드의 문제점을 작성해 주세요.
+      placeholder: |
+        - 가독성 저하
+        - 중복 코드
+        - 책임 분리 필요
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: 🎯 리팩토링 목표
+      description: 리팩토링을 통해 개선하고자 하는 목표를 작성해 주세요.
+      placeholder: |
+        - 유지보수성 향상
+        - 테스트 용이성 개선
+        - 구조 단순화
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: ⚠️ 영향 범위
+      description: 리팩토링이 영향을 줄 수 있는 영역을 작성해 주세요.
+
+  - type: textarea
+    attributes:
+      label: 🙋🏻 참고 자료
+      description: 관련 코드 링크나 문서가 있다면 작성해 주세요.

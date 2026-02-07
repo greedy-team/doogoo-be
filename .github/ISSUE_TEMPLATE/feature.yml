@@ -1,11 +1,7 @@
----
-name: "✨ Feature"
-about: 새로운 기능을 추가합니다.
-title: '["feature"]'
-labels: enhancement
-assignees: ''
-
----
+name: ✨ Feature
+description: 새로운 기능 추가
+title: "[FEATURE] "
+labels: ["enhancement"]
 
 body:
   - type: textarea
@@ -18,13 +14,13 @@ body:
 
   - type: textarea
     attributes:
-      label: ✅ 발생한 문제
-      description: 문제가 발생한 상황을 작성해주세요.
-      placeholder: 최대한 세분화 해서 적어주세요!
+      label: 🎯 목표
+      description: 이 기능을 통해 무엇을 해결하려고 하나요?
+      placeholder: 문제 해결 목적이나 기대 효과
     validations:
       required: true
 
   - type: textarea
     attributes:
       label: 🙋🏻 참고 자료
-      description: 참고 자료가 있다면 작성해 주세요.
+      description: 관련 문서, 링크, 스크린샷이 있다면 작성해 주세요.
