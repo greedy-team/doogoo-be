@@ -6,7 +6,7 @@ plugins {
 
 group = 'com.doogoo'
 version = '0.0.1-SNAPSHOT'
-description = '두구두구 백엔드'
+description = '백엔드'
 
 java {
 	toolchain {
@@ -20,13 +20,14 @@ repositories {
 
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter'
-    implementation 'org.springframework.boot:spring-boot-starter-web'
-    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	implementation 'org.jsoup:jsoup:1.17.2'
+	implementation 'com.fasterxml.jackson.core:jackson-databind'
+	runtimeOnly 'org.postgresql:postgresql'
 
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
-
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-
 }
 
 tasks.named('test') {

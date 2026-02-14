@@ -1,0 +1,21 @@
+다음 세종대학교 비교과 프로그램 공지를 분석해주세요.
+
+제목: %s
+내용: %s
+
+다음 JSON 형식으로 응답해주세요:
+{
+  "category": "COMPETITION | CAREER | VOLUNTEER | COUNSELING | GLOBAL | CAMPUS | ETC",
+  "location": "장소 (없으면 null)",
+  "target": "모집대상 (없으면 null)",
+  "mileage": 마일리지 점수 (없으면 null)
+}
+
+카테고리 기준:
+- COMPETITION: 대회, 학술제, 경진대회, 공모전
+- CAREER: 취업, 창업, 인턴, 채용, 창업캠프
+- VOLUNTEER: 봉사, 사회참여, 교육봉사
+- COUNSELING: 상담, 심리, 진로상담
+- GLOBAL: 글로벌, 국제, 해외, 교환학생, 어학
+- CAMPUS: 캠퍼스 생활, OT, 축제, 동아리
+- ETC: 위 카테고리에 해당하지 않는 경우

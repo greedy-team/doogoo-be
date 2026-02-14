@@ -68,3 +68,4 @@ public class IcsResponseTest {
         assertThatThrownBy(() -> icsController.getFeed(notExistToken, download)).isInstanceOf(NotFoundException.class);
     }
 }
+
