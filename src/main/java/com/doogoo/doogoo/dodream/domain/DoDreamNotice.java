@@ -1,5 +1,6 @@
 package com.doogoo.doogoo.dodream.domain;
 
+import com.doogoo.doogoo.catalog.domain.Keyword;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.Set;
@@ -25,8 +26,9 @@ public class DoDreamNotice {
     private LocalDateTime operatingEndAt;
 
     @ElementCollection(fetch = FetchType.LAZY)
-    @Column(nullable = false)
-    private Set<String> keywordIds;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "keyword", nullable = false)
+    private Set<Keyword> keywords;
 
     @Column(nullable = false)
     private String detailUrl;
