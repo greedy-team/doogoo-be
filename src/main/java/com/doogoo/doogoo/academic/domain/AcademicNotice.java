@@ -31,4 +31,10 @@ public class AcademicNotice {
     private LocalDateTime endAt;
 
     protected AcademicNotice() {}
+
+    public String getNoticeId() { return noticeId; }
+    public String getTitle() { return title; }
+    public Grade getGrade() { return grade; }
+    public LocalDateTime getStartAt() { return startAt; }
+    public LocalDateTime getEndAt() { return endAt; }
 }
