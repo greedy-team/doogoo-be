@@ -34,4 +34,14 @@ public class DoDreamNotice {
     private String detailUrl;
 
     protected DoDreamNotice() {}
+
+    public String getNoticeId() { return noticeId; }
+    public String getTitle() { return title; }
+    public String getDepartmentName() { return departmentName; }
+    public java.time.LocalDateTime getApplicationStartAt() { return applicationStartAt; }
+    public java.time.LocalDateTime getApplicationEndAt() { return applicationEndAt; }
+    public java.time.LocalDateTime getOperatingStartAt() { return operatingStartAt; }
+    public java.time.LocalDateTime getOperatingEndAt() { return operatingEndAt; }
+    public java.util.Set<Keyword> getKeywords() { return keywords; }
+    public String getDetailUrl() { return detailUrl; }
 }
