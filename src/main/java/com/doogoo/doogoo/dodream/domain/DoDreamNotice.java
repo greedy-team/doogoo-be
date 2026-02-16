@@ -25,8 +25,7 @@ public class DoDreamNotice {
     private LocalDateTime operatingEndAt;
 
     @ElementCollection(fetch = FetchType.LAZY)
-    @CollectionTable(name = "dodream_notice_keywords", joinColumns = @JoinColumn(name = "noticeId"))
-    @Column(name = "keywordId", nullable = false)
+    @Column(nullable = false)
     private Set<String> keywordIds;
 
     @Column(nullable = false)
