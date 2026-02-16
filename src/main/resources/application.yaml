@@ -19,6 +19,10 @@ crawl:
     detail-path: /ko/program/all/view/{id}
     delay-ms: 1500
     regular-pages: 2
+    active-statuses:
+      - scheduled  # 접수예정
+      - open       # 접수중
+      - operation  # 운영중
 
 openai:
   api-key: ${OPENAI_API_KEY}

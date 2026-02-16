@@ -12,7 +12,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @Component
 public class CrawlScheduler {
@@ -47,31 +49,47 @@ public class CrawlScheduler {
         int closedCount = 0;
 
         try {
-            for (int page = 1; page <= config.getRegularPages(); page++) {
-                Document doc = crawler.fetchListPage(page);
+            // 활성 상태별로 크롤링 (scheduled, open, operation)
+            Map<Long, EventDto> allEvents = new LinkedHashMap<>();
 
-                List<Long> closedIds = parser.parseClosedIds(doc);
-                if (!closedIds.isEmpty()) {
-                    syncService.markClosedBatch(closedIds);
-                    closedCount += closedIds.size();
-                }
+            for (String status : config.getActiveStatuses()) {
+                log.info("상태 '{}' 크롤링 시작", status);
 
-                List<EventDto> openEvents = parser.parseList(doc);
+                for (int page = 1; page <= config.getRegularPages(); page++) {
+                    Document doc = crawler.fetchListPage(page, status);
 
-                for (EventDto dto : openEvents) {
-                    try {
-                        if (syncService.tryUpdateFromList(dto)) {
-                            updateCount++;
-                        } else {
-                            Document detailDoc = crawler.fetchDetailPage(dto.dodreamId());
-                            EventDto detailed = parser.parseDetail(detailDoc, dto);
-                            AiClassifyResult aiResult = aiClassifier.classify(detailed.title(), detailed.description());
-                            syncService.saveNew(detailed, aiResult);
-                            newCount++;
-                        }
-                    } catch (Exception e) {
-                        log.warn("공지 처리 실패 - dodreamId: {}, 다음 공지로 넘어감: {}", dto.dodreamId(), e.getMessage(), e);
+                    // 백업용: 마감된 공지 감지 및 처리
+                    List<Long> closedIds = parser.parseClosedIds(doc);
+                    if (!closedIds.isEmpty()) {
+                        syncService.markClosedBatch(closedIds);
+                        closedCount += closedIds.size();
                     }
+
+                    List<EventDto> events = parser.parseList(doc);
+
+                    // 중복 제거: dodreamId 기준으로 먼저 발견된 것 유지
+                    for (EventDto dto : events) {
+                        allEvents.putIfAbsent(dto.dodreamId(), dto);
+                    }
+                }
+            }
+
+            log.info("총 {}개의 고유 공지 발견", allEvents.size());
+
+            // 수집된 모든 공지 처리
+            for (EventDto dto : allEvents.values()) {
+                try {
+                    if (syncService.tryUpdateFromList(dto)) {
+                        updateCount++;
+                    } else {
+                        Document detailDoc = crawler.fetchDetailPage(dto.dodreamId());
+                        EventDto detailed = parser.parseDetail(detailDoc, dto);
+                        AiClassifyResult aiResult = aiClassifier.classify(detailed.title(), detailed.description());
+                        syncService.saveNew(detailed, aiResult);
+                        newCount++;
+                    }
+                } catch (Exception e) {
+                    log.warn("공지 처리 실패 - dodreamId: {}, 다음 공지로 넘어감: {}", dto.dodreamId(), e.getMessage(), e);
                 }
             }
         } catch (Exception e) {

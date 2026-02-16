@@ -38,6 +38,20 @@ public class DodreamCrawler {
         }
     }
 
+    public Document fetchListPage(int page, String status) {
+        String url = config.buildListUrl(page, status);
+        log.info("목록 페이지 크롤링 (status={}): {}", status, url);
+        delay();
+        try {
+            return Jsoup.connect(url)
+                    .userAgent(USER_AGENT)
+                    .timeout(10_000)
+                    .get();
+        } catch (IOException e) {
+            throw new CustomException(ErrorCode.CRAWL_FAILED, e);
+        }
+    }
+
     public Document fetchDetailPage(long dodreamId) {
         String url = config.buildDetailUrl(dodreamId);
         log.info("상세 페이지 크롤링: dodreamId={}", dodreamId);
