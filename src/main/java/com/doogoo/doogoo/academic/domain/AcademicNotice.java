@@ -1,5 +1,6 @@
 package com.doogoo.doogoo.academic.domain;
 
+import com.doogoo.doogoo.catalog.domain.Grade;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
@@ -8,7 +9,7 @@ import java.time.LocalDateTime;
         name = "academic_notices",
         indexes = {
                 @Index(name = "idx_academic_start", columnList = "startAt"),
-                @Index(name = "idx_academic_grade", columnList = "gradeId")
+                @Index(name = "idx_academic_grade", columnList = "grade")
         }
 )
 public class AcademicNotice {
@@ -20,8 +21,9 @@ public class AcademicNotice {
     @Column(nullable = false)
     private String title;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String gradeId;
+    private Grade grade;
 
     @Column(nullable = false)
     private LocalDateTime startAt;
