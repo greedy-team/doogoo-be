@@ -1,5 +1,6 @@
-package com.doogoo.doogoo.subscription.domain;
+package com.doogoo.doogoo.subscription.infrastructure;
 
+import com.doogoo.doogoo.subscription.domain.Subscription;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 
