@@ -13,6 +13,7 @@ public class LookupController {
 
     private final LookupQueryService lookupQueryService;
 
+
     public LookupController(LookupQueryService lookupQueryService) {
         this.lookupQueryService = lookupQueryService;
     }
