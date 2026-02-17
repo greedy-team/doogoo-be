@@ -35,6 +35,21 @@ public class DoDreamNotice {
 
     protected DoDreamNotice() {}
 
+    public DoDreamNotice(String noticeId, String title, String departmentName,
+                         LocalDateTime applicationStartAt, LocalDateTime applicationEndAt,
+                         LocalDateTime operatingStartAt, LocalDateTime operatingEndAt,
+                         Set<Keyword> keywords, String detailUrl) {
+        this.noticeId = noticeId;
+        this.title = title;
+        this.departmentName = departmentName;
+        this.applicationStartAt = applicationStartAt;
+        this.applicationEndAt = applicationEndAt;
+        this.operatingStartAt = operatingStartAt;
+        this.operatingEndAt = operatingEndAt;
+        this.keywords = keywords != null ? keywords : Set.of();
+        this.detailUrl = detailUrl;
+    }
+
     public String getNoticeId() { return noticeId; }
     public String getTitle() { return title; }
     public String getDepartmentName() { return departmentName; }

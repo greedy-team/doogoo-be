@@ -32,6 +32,14 @@ public class AcademicNotice {
 
     protected AcademicNotice() {}
 
+    public AcademicNotice(String noticeId, String title, Grade grade, LocalDateTime startAt, LocalDateTime endAt) {
+        this.noticeId = noticeId;
+        this.title = title;
+        this.grade = grade;
+        this.startAt = startAt;
+        this.endAt = endAt;
+    }
+
     public String getNoticeId() { return noticeId; }
     public String getTitle() { return title; }
     public Grade getGrade() { return grade; }
