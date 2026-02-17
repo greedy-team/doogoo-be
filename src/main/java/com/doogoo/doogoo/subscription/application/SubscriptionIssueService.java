@@ -3,6 +3,8 @@ package com.doogoo.doogoo.subscription.application;
 import com.doogoo.doogoo.subscription.domain.SourceType;
 import com.doogoo.doogoo.subscription.domain.Subscription;
 import com.doogoo.doogoo.subscription.infrastructure.SubscriptionRepository;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 import java.security.SecureRandom;
 import org.springframework.stereotype.Service;
 
@@ -13,9 +15,20 @@ public class SubscriptionIssueService {
     private static final int TOKEN_LENGTH = 12;
 
     private final SubscriptionRepository subscriptionRepository;
+    private final ObjectMapper objectMapper;
 
-    public SubscriptionIssueService(SubscriptionRepository subscriptionRepository) {
+    public SubscriptionIssueService(SubscriptionRepository subscriptionRepository, ObjectMapper objectMapper) {
         this.subscriptionRepository = subscriptionRepository;
+        this.objectMapper = objectMapper;
+    }
+
+    public Subscription issue(SourceType sourceType, Object payload, boolean alarmEnabled, Integer alarmMinutesBefore) {
+        try {
+            String payloadJson = objectMapper.writeValueAsString(payload);
+            return issue(sourceType, payloadJson, alarmEnabled, alarmMinutesBefore);
+        } catch (JacksonException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public Subscription issue(SourceType sourceType, String payload, boolean alarmEnabled, Integer alarmMinutesBefore) {
