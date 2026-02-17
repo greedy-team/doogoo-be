@@ -2,7 +2,9 @@ package com.doogoo.doogoo.calendar.api;
 
 import com.doogoo.doogoo.calendar.application.IcsService;
 import com.doogoo.doogoo.subscription.application.SubscriptionQueryService;
+import com.doogoo.doogoo.subscription.domain.InvalidTokenException;
 import com.doogoo.doogoo.subscription.domain.Subscription;
+import java.util.regex.Pattern;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -15,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class CalendarController {
 
     private static final MediaType TEXT_CALENDAR = MediaType.parseMediaType("text/calendar; charset=utf-8");
+    private static final Pattern TOKEN_PATTERN = Pattern.compile("^[A-Za-z0-9]{6,64}$");
 
     private final SubscriptionQueryService subscriptionQueryService;
     private final IcsService icsService;
@@ -29,6 +32,9 @@ public class CalendarController {
             @PathVariable("token") String token,
             @RequestParam(name = "download", required = false, defaultValue = "false") boolean download
     ) {
+        if (token == null || !TOKEN_PATTERN.matcher(token).matches()) {
+            throw new InvalidTokenException();
+        }
         Subscription subscription = subscriptionQueryService.getByToken(token);
         subscription.touch();
         String body = icsService.render(subscription);

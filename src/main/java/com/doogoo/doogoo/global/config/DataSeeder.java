@@ -13,10 +13,6 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-/**
- * 개발/테스트용 최소 시드. 공지 테이블이 비어 있을 때만 DB에 초기 데이터를 넣는다.
- * 크롤링 없음. 조회/응답은 항상 repository 기반.
- */
 @Component
 public class DataSeeder implements ApplicationRunner {
 
