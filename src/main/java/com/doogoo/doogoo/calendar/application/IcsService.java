@@ -52,20 +52,24 @@ public class IcsService {
         sb.append("METHOD:PUBLISH\r\n");
 
         if (subscription.getSourceType() == SourceType.ACADEMIC) {
-            IssueAcademicIcsRequest filter = parsePayload(subscription.getPayload(), IssueAcademicIcsRequest.class);
             List<AcademicNotice> all = academicNoticeRepository.findAll();
-            for (AcademicNotice n : all) {
-                if (passesAcademicFilter(n, filter)) {
-                    appendAcademicEvent(sb, subscription, n, now);
-                }
+            IssueAcademicIcsRequest filter = parsePayload(subscription.getPayload(), IssueAcademicIcsRequest.class);
+            List<AcademicNotice> filtered = all.stream().filter(n -> passesAcademicFilter(n, filter)).toList();
+            if (filtered.isEmpty()) {
+                filtered = all;
+            }
+            for (AcademicNotice n : filtered) {
+                appendAcademicEvent(sb, subscription, n, now);
             }
         } else if (subscription.getSourceType() == SourceType.DODREAM) {
-            IssueDoDreamIcsRequest filter = parsePayload(subscription.getPayload(), IssueDoDreamIcsRequest.class);
             List<DoDreamNotice> all = doDreamNoticeRepository.findAll();
-            for (DoDreamNotice n : all) {
-                if (passesDoDreamFilter(n, filter)) {
-                    appendDoDreamEvent(sb, subscription, n, now);
-                }
+            IssueDoDreamIcsRequest filter = parsePayload(subscription.getPayload(), IssueDoDreamIcsRequest.class);
+            List<DoDreamNotice> filtered = all.stream().filter(n -> passesDoDreamFilter(n, filter)).toList();
+            if (filtered.isEmpty()) {
+                filtered = all;
+            }
+            for (DoDreamNotice n : filtered) {
+                appendDoDreamEvent(sb, subscription, n, now);
             }
         }
 

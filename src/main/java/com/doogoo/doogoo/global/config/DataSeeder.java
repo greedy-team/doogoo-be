@@ -10,10 +10,13 @@ import java.time.LocalDateTime;
 import java.util.Set;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 @Component
+@Order(Ordered.LOWEST_PRECEDENCE)
 public class DataSeeder implements ApplicationRunner {
 
     private final AcademicNoticeRepository academicNoticeRepository;
