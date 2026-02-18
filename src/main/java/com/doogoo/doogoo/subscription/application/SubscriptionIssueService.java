@@ -1,5 +1,7 @@
 package com.doogoo.doogoo.subscription.application;
 
+import com.doogoo.doogoo.common.error.DoogooException;
+import com.doogoo.doogoo.common.error.ErrorCode;
 import com.doogoo.doogoo.subscription.domain.SourceType;
 import com.doogoo.doogoo.subscription.domain.Subscription;
 import com.doogoo.doogoo.subscription.infrastructure.SubscriptionRepository;
@@ -27,7 +29,7 @@ public class SubscriptionIssueService {
             String payloadJson = objectMapper.writeValueAsString(payload);
             return issue(sourceType, payloadJson, alarmEnabled, alarmMinutesBefore);
         } catch (JacksonException e) {
-            throw new RuntimeException(e);
+            throw new DoogooException(ErrorCode.INTERNAL_SERVER_ERROR, e);
         }
     }
 
