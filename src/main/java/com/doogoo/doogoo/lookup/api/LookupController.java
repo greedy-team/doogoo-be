@@ -6,7 +6,11 @@ import java.util.List;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
+@Tag(name = "Lookup", description = "학년/학과/키워드 등 공통 코드 조회")
 @RestController
 @RequestMapping("/api")
 public class LookupController {
@@ -18,16 +22,22 @@ public class LookupController {
         this.lookupQueryService = lookupQueryService;
     }
 
+    @Operation(summary = "학년 목록 조회")
+    @ApiResponse(responseCode = "200", description = "성공")
     @GetMapping("/grades")
     public GradesResponse grades() {
         return new GradesResponse(lookupQueryService.getGrades());
     }
 
+    @Operation(summary = "학과 목록 조회")
+    @ApiResponse(responseCode = "200", description = "성공")
     @GetMapping("/departments")
     public DepartmentsResponse departments() {
         return new DepartmentsResponse(lookupQueryService.getDepartments());
     }
 
+    @Operation(summary = "키워드 목록 조회")
+    @ApiResponse(responseCode = "200", description = "성공")
     @GetMapping("/keywords")
     public KeywordsResponse keywords() {
         return new KeywordsResponse(lookupQueryService.getKeywords());
