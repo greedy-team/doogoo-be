@@ -1,6 +1,8 @@
 spring:
   application:
     name: doogoo
+  profiles:
+    default: dev
 
 management:
   endpoint:
