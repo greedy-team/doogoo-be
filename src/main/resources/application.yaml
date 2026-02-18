@@ -2,26 +2,10 @@ spring:
   application:
     name: doogoo
 
-public:
-  base:
-    url: ${PUBLIC_BASE_URL:}
-  datasource:
-    url: ${DATASOURCE_URL:jdbc:h2:mem:doogoo;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE}
-    username: ${DATASOURCE_USERNAME:sa}
-    password: ${DATASOURCE_PASSWORD:}
-  jpa:
-    hibernate:
-      ddl-auto: update
-    properties:
-      hibernate:
-        format_sql: false
-  flyway:
-    enabled: false
-
 management:
   endpoint:
     health:
-      enabled: true
+      show-details: when-authorized
   endpoints:
     web:
       exposure:

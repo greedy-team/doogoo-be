@@ -16,10 +16,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/**
- * POST /api/dodream/ics 명세 검증.
- * 메인: src/main/java/com/doogoo/doogoo/dodream/api/DoDreamController.java
- */
 @SpringBootTest
 @ActiveProfiles("test")
 class DoDreamControllerTest {

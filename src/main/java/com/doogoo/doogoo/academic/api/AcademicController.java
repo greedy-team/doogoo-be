@@ -3,17 +3,16 @@ package com.doogoo.doogoo.academic.api;
 import com.doogoo.doogoo.academic.api.dto.AcademicNoticesResponse;
 import com.doogoo.doogoo.academic.api.dto.IssueAcademicIcsRequest;
 import com.doogoo.doogoo.academic.application.AcademicNoticeQueryService;
-import com.doogoo.doogoo.common.url.PublicBaseUrlResolver;
 import com.doogoo.doogoo.dodream.api.dto.IssueIcsResponse;
 import com.doogoo.doogoo.subscription.application.SubscriptionIssueService;
 import com.doogoo.doogoo.subscription.domain.SourceType;
 import com.doogoo.doogoo.subscription.domain.Subscription;
-import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 @RestController
 @RequestMapping("/api/academic")
@@ -21,12 +20,10 @@ public class AcademicController {
 
     private final SubscriptionIssueService subscriptionIssueService;
     private final AcademicNoticeQueryService academicNoticeQueryService;
-    private final PublicBaseUrlResolver publicBaseUrlResolver;
 
-    public AcademicController(SubscriptionIssueService subscriptionIssueService, AcademicNoticeQueryService academicNoticeQueryService, PublicBaseUrlResolver publicBaseUrlResolver) {
+    public AcademicController(SubscriptionIssueService subscriptionIssueService, AcademicNoticeQueryService academicNoticeQueryService) {
         this.subscriptionIssueService = subscriptionIssueService;
         this.academicNoticeQueryService = academicNoticeQueryService;
-        this.publicBaseUrlResolver = publicBaseUrlResolver;
     }
 
     @GetMapping("/notices")
@@ -35,14 +32,14 @@ public class AcademicController {
     }
 
     @PostMapping("/ics")
-    public IssueIcsResponse issueIcs(@RequestBody IssueAcademicIcsRequest request, HttpServletRequest httpRequest) {
+    public IssueIcsResponse issueIcs(@RequestBody IssueAcademicIcsRequest request) {
         Subscription subscription = subscriptionIssueService.issue(
                 SourceType.ACADEMIC,
                 request,
                 request.alarmEnabled(),
                 request.alarmMinutesBefore()
         );
-        String baseUrl = publicBaseUrlResolver.resolveBaseUrl(httpRequest);
+        String baseUrl = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
         String icsUrl = baseUrl + "/cal/" + subscription.getToken() + ".ics";
         String downloadUrl = icsUrl + "?download=true";
         return new IssueIcsResponse(subscription.getToken(), icsUrl, downloadUrl);
