@@ -14,6 +14,6 @@ public class OpenApiConfig {
                 .info(new Info()
                         .title("두구두구 API")
                         .version("1.0")
-                        .description("학사/두드림 공지·ICS 구독 API"));
+                        .description("학사/두드림 공지 ICS 캘린더 구독 및 조회 API"));
     }
 }

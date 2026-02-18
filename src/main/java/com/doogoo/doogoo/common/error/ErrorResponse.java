@@ -1,9 +1,10 @@
 package com.doogoo.doogoo.common.error;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import java.time.LocalDateTime;
 
-@Schema(description = "에러 응답 (4xx/5xx 시 JSON)")
+@Schema(description = "에러 응답")
 public record ErrorResponse(
         @Schema(description = "HTTP 상태 코드") int status,
         @Schema(description = "에러 코드") String code,
