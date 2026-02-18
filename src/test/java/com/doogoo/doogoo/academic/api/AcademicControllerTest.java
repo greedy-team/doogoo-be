@@ -16,10 +16,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/**
- * POST /api/academic/ics 명세 검증.
- * 메인: src/main/java/com/doogoo/doogoo/academic/api/AcademicController.java
- */
 @SpringBootTest
 @ActiveProfiles("test")
 class AcademicControllerTest {
