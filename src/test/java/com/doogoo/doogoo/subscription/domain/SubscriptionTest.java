@@ -6,10 +6,6 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-/**
- * Subscription 생성자 유효성 검증.
- * 메인: src/main/java/com/doogoo/doogoo/subscription/domain/Subscription.java
- */
 class SubscriptionTest {
 
     @Test
