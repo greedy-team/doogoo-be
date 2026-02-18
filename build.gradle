@@ -26,6 +26,7 @@ dependencies {
 	implementation 'org.mnode.ical4j:ical4j:4.2.3'
 	implementation 'org.jsoup:jsoup:1.18.1'
 	runtimeOnly 'org.postgresql:postgresql'
+	runtimeOnly 'com.h2database:h2'
 	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.1'
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
 
