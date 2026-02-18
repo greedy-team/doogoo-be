@@ -1,7 +1,8 @@
 package com.doogoo.doogoo.subscription.application;
 
+import com.doogoo.doogoo.common.error.DoogooException;
+import com.doogoo.doogoo.common.error.ErrorCode;
 import com.doogoo.doogoo.subscription.domain.Subscription;
-import com.doogoo.doogoo.subscription.domain.SubscriptionNotFoundException;
 import com.doogoo.doogoo.subscription.infrastructure.SubscriptionRepository;
 import org.springframework.stereotype.Service;
 
@@ -16,6 +17,6 @@ public class SubscriptionQueryService {
 
     public Subscription getByToken(String token) {
         return subscriptionRepository.findByToken(token)
-                .orElseThrow(SubscriptionNotFoundException::new);
+                .orElseThrow(() -> new DoogooException(ErrorCode.TOKEN_NOT_FOUND));
     }
 }

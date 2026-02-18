@@ -1,5 +1,8 @@
 package com.doogoo.doogoo.catalog.domain;
 
+import com.doogoo.doogoo.common.error.DoogooException;
+import com.doogoo.doogoo.common.error.ErrorCode;
+
 import java.util.Arrays;
 
 public enum Keyword {
@@ -26,6 +29,6 @@ public enum Keyword {
         return Arrays.stream(values())
                 .filter(k -> k.id.equals(id))
                 .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("invalid keyword id"));
+                .orElseThrow(() -> new DoogooException(ErrorCode.INVALID_TOKEN_FORMAT));
     }
 }

@@ -1,5 +1,7 @@
 package com.doogoo.doogoo.subscription.domain;
 
+import com.doogoo.doogoo.common.error.DoogooException;
+import com.doogoo.doogoo.common.error.ErrorCode;
 import jakarta.persistence.*;
 import java.time.Instant;
 
@@ -40,11 +42,11 @@ public class Subscription {
     protected Subscription() {}
 
     public Subscription(String token, SourceType sourceType, String payload, boolean alarmEnabled, Integer alarmMinutesBefore) {
-        if (token == null || token.isBlank()) throw new IllegalArgumentException();
-        if (sourceType == null) throw new IllegalArgumentException();
-        if (payload == null || payload.isBlank()) throw new IllegalArgumentException();
+        if (token == null || token.isBlank()) throw new DoogooException(ErrorCode.INVALID_TOKEN_FORMAT);
+        if (sourceType == null) throw new DoogooException(ErrorCode.INVALID_TOKEN_FORMAT);
+        if (payload == null || payload.isBlank()) throw new DoogooException(ErrorCode.INVALID_TOKEN_FORMAT);
         if (alarmEnabled && (alarmMinutesBefore == null || alarmMinutesBefore < 0 || alarmMinutesBefore > 10080))
-            throw new IllegalArgumentException();
+            throw new DoogooException(ErrorCode.INVALID_TOKEN_FORMAT);
         this.token = token;
         this.sourceType = sourceType;
         this.payload = payload;

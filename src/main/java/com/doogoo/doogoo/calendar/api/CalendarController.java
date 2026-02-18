@@ -1,8 +1,9 @@
 package com.doogoo.doogoo.calendar.api;
 
 import com.doogoo.doogoo.calendar.application.IcsService;
+import com.doogoo.doogoo.common.error.DoogooException;
+import com.doogoo.doogoo.common.error.ErrorCode;
 import com.doogoo.doogoo.subscription.application.SubscriptionQueryService;
-import com.doogoo.doogoo.subscription.domain.InvalidTokenException;
 import com.doogoo.doogoo.subscription.domain.Subscription;
 import java.util.regex.Pattern;
 import org.springframework.http.HttpHeaders;
@@ -33,7 +34,7 @@ public class CalendarController {
             @RequestParam(name = "download", required = false, defaultValue = "false") boolean download
     ) {
         if (token == null || !TOKEN_PATTERN.matcher(token).matches()) {
-            throw new InvalidTokenException();
+            throw new DoogooException(ErrorCode.INVALID_TOKEN_FORMAT);
         }
         Subscription subscription = subscriptionQueryService.getByToken(token);
         subscription.touch();
