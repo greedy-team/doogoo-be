@@ -13,7 +13,14 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
+@Tag(name = "Calendar", description = "ICS 캘린더 구독 조회")
 @RestController
 public class CalendarController {
 
@@ -28,10 +35,16 @@ public class CalendarController {
         this.icsService = icsService;
     }
 
+    @Operation(summary = "ICS 조회", description = "구독 토큰으로 캘린더 ICS 본문을 반환한다. download=true 시 Content-Disposition: attachment")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "성공", content = @Content(mediaType = "text/calendar")),
+        @ApiResponse(responseCode = "400", description = "토큰 형식 오류"),
+        @ApiResponse(responseCode = "404", description = "토큰 없음")
+    })
     @GetMapping(value = "/cal/{token}.ics", produces = "text/calendar; charset=utf-8")
     public ResponseEntity<String> getIcs(
-            @PathVariable("token") String token,
-            @RequestParam(name = "download", required = false, defaultValue = "false") boolean download
+            @Parameter(description = "구독 발급 시 받은 토큰 (6~64자 영숫자)") @PathVariable("token") String token,
+            @Parameter(description = "true면 파일 다운로드용 헤더 설정") @RequestParam(name = "download", required = false, defaultValue = "false") boolean download
     ) {
         if (token == null || !TOKEN_PATTERN.matcher(token).matches()) {
             throw new DoogooException(ErrorCode.INVALID_TOKEN_FORMAT);
