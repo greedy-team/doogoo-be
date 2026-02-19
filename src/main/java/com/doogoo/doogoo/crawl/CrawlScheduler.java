@@ -1,5 +1,7 @@
 package com.doogoo.doogoo.crawl;
 
+import com.doogoo.doogoo.academic.AcademicScheduleDto;
+import com.doogoo.doogoo.academic.AcademicScheduleSyncService;
 import com.doogoo.doogoo.classify.AiClassifier;
 import com.doogoo.doogoo.classify.AiClassifyResult;
 import com.doogoo.doogoo.config.CrawlConfig;
@@ -12,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDate;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,19 +29,28 @@ public class CrawlScheduler {
     private final AiClassifier aiClassifier;
     private final EventSyncService syncService;
     private final CrawlConfig config;
+    private final AcademicCrawler academicCrawler;
+    private final AcademicParser academicParser;
+    private final AcademicScheduleSyncService academicSyncService;
 
     public CrawlScheduler(
             DodreamCrawler crawler,
             DodreamParser parser,
             AiClassifier aiClassifier,
             EventSyncService syncService,
-            CrawlConfig config
+            CrawlConfig config,
+            AcademicCrawler academicCrawler,
+            AcademicParser academicParser,
+            AcademicScheduleSyncService academicSyncService
     ) {
         this.crawler = crawler;
         this.parser = parser;
         this.aiClassifier = aiClassifier;
         this.syncService = syncService;
         this.config = config;
+        this.academicCrawler = academicCrawler;
+        this.academicParser = academicParser;
+        this.academicSyncService = academicSyncService;
     }
 
     @Scheduled(cron = "0 0 */6 * * *")
@@ -122,6 +134,26 @@ public class CrawlScheduler {
         }
 
         log.info("=== 전체 동기화 완료: {}건 처리 ===", syncCount);
+    }
+
+    // 매년 1월 1일 새벽 2시, 당해 연도와 전년도 학사일정 동기화
+    @Scheduled(cron = "0 0 2 1 1 *")
+    public void crawlAcademicSchedule() {
+        int year = LocalDate.now().getYear();
+        crawlAcademicScheduleForYear(year);
+        crawlAcademicScheduleForYear(year - 1);
+    }
+
+    public void crawlAcademicScheduleForYear(int year) {
+        log.info("=== 학사일정 크롤링 시작: year={} ===", year);
+        try {
+            Document doc = academicCrawler.fetchCalendar(year);
+            List<AcademicScheduleDto> dtos = academicParser.parse(doc, year);
+            academicSyncService.replaceByYear(year, dtos);
+            log.info("=== 학사일정 크롤링 완료: year={}, {}건 ===", year, dtos.size());
+        } catch (Exception e) {
+            log.error("학사일정 크롤링 실패: year={}, {}", year, e.getMessage(), e);
+        }
     }
 
     @Scheduled(cron = "0 0 4 * * *")

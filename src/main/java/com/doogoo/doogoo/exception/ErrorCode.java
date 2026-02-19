@@ -7,6 +7,8 @@ public enum ErrorCode {
     CRAWL_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "C001", "크롤링 실패"),
     PARSE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "C002", "데이터 파싱 실패"),
     INVALID_HTML_STRUCTURE(HttpStatus.INTERNAL_SERVER_ERROR, "C003", "HTML 구조가 유효하지 않습니다"),
+    ACADEMIC_CRAWL_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "C004", "학사일정 크롤링 실패"),
+    ACADEMIC_LOGIN_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "C005", "세종대 포털 로그인 실패"),
 
     AI_CLASSIFICATION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "A001", "AI 분류 실패"),
 

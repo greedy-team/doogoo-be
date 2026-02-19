@@ -27,34 +27,22 @@ public class DodreamCrawler {
     public Document fetchListPage(int page) {
         String url = config.buildListUrl(page);
         log.info("목록 페이지 크롤링: {}", url);
-        delay();
-        try {
-            return Jsoup.connect(url)
-                    .userAgent(USER_AGENT)
-                    .timeout(10_000)
-                    .get();
-        } catch (IOException e) {
-            throw new CustomException(ErrorCode.CRAWL_FAILED, e);
-        }
+        return fetch(url);
     }
 
     public Document fetchListPage(int page, String status) {
         String url = config.buildListUrl(page, status);
         log.info("목록 페이지 크롤링 (status={}): {}", status, url);
-        delay();
-        try {
-            return Jsoup.connect(url)
-                    .userAgent(USER_AGENT)
-                    .timeout(10_000)
-                    .get();
-        } catch (IOException e) {
-            throw new CustomException(ErrorCode.CRAWL_FAILED, e);
-        }
+        return fetch(url);
     }
 
     public Document fetchDetailPage(long dodreamId) {
         String url = config.buildDetailUrl(dodreamId);
         log.info("상세 페이지 크롤링: dodreamId={}", dodreamId);
+        return fetch(url);
+    }
+
+    private Document fetch(String url) {
         delay();
         try {
             return Jsoup.connect(url)
