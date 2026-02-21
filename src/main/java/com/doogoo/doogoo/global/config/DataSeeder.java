@@ -66,7 +66,7 @@ public class DataSeeder implements ApplicationRunner {
                 base.plusDays(7).withHour(18).withMinute(0).withSecond(0).withNano(0),
                 base.plusDays(10).withHour(10).withMinute(0).withSecond(0).withNano(0),
                 base.plusDays(11).withHour(17).withMinute(0).withSecond(0).withNano(0),
-                Set.of(Keyword.K_1),
+                Set.of(Keyword.COMPETITION),
                 "https://example.com/dodream/1"
         ));
         doDreamNoticeRepository.save(new DoDreamNotice(
@@ -77,7 +77,7 @@ public class DataSeeder implements ApplicationRunner {
                 base.plusDays(9).withHour(18).withMinute(0).withSecond(0).withNano(0),
                 base.plusDays(3).withHour(14).withMinute(0).withSecond(0).withNano(0),
                 base.plusDays(3).withHour(16).withMinute(0).withSecond(0).withNano(0),
-                Set.of(Keyword.K_2),
+                Set.of(Keyword.CAREER),
                 "https://example.com/dodream/2"
         ));
     }

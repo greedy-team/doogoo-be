@@ -6,8 +6,13 @@ import com.doogoo.doogoo.common.error.ErrorCode;
 import java.util.Arrays;
 
 public enum Keyword {
-    K_1("k_1", "대회, 학술제"),
-    K_2("k_2", "취창업");
+    COMPETITION("competition", "대회 및 학술제"),
+    CAREER("career", "취창업"),
+    VOLUNTEER("volunteer", "봉사·사회참여"),
+    COUNSELING("counseling", "상담"),
+    GLOBAL("global", "글로벌"),
+    CAMPUS("campus", "캠퍼스"),
+    ETC("etc", "기타");
 
     private final String id;
     private final String displayName;

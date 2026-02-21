@@ -21,7 +21,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class DoDreamControllerTest {
 
     private static final String REQUEST_JSON =
-            "{\"selectedDepartmentId\":null,\"selectedMinorDepartmentId\":null,\"selectedKeywordId\":[\"k_1\"],\"alarmEnabled\":false,\"alarmMinutesBefore\":null}";
+            "{\"selectedDepartmentId\":null,\"selectedMinorDepartmentId\":null,\"selectedKeywordId\":[\"competition\"],\"alarmEnabled\":false,\"alarmMinutesBefore\":null}";
 
     @Autowired
     private WebApplicationContext webApplicationContext;
