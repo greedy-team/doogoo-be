@@ -1,0 +1,46 @@
+package com.doogoo.doogoo.dodream.api;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.web.context.WebApplicationContext;
+
+import static org.hamcrest.Matchers.containsString;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+@SpringBootTest
+@ActiveProfiles("test")
+class DoDreamControllerTest {
+
+    private static final String REQUEST_JSON =
+            "{\"selectedDepartmentId\":null,\"selectedMinorDepartmentId\":null,\"selectedKeywordId\":[\"competition\"],\"alarmEnabled\":false,\"alarmMinutesBefore\":null}";
+
+    @Autowired
+    private WebApplicationContext webApplicationContext;
+
+    private MockMvc mockMvc;
+
+    @BeforeEach
+    void setUp() {
+        mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
+    }
+
+    @Test
+    @DisplayName("POST /api/dodream/ics → 200, response에 token·icsUrl 존재")
+    void issue_ics_returns_200_with_token_and_icsUrl() throws Exception {
+        mockMvc.perform(post("/api/dodream/ics")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(REQUEST_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.token").exists())
+                .andExpect(jsonPath("$.icsUrl").value(containsString("/cal/")));
+    }
+}

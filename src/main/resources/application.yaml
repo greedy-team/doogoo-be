@@ -1,3 +1,14 @@
 spring:
   application:
     name: doogoo
+  profiles:
+    default: dev
+
+management:
+  endpoint:
+    health:
+      show-details: when-authorized
+  endpoints:
+    web:
+      exposure:
+        include: health
