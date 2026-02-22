@@ -5,7 +5,7 @@ import com.doogoo.doogoo.common.error.DoogooException;
 import com.doogoo.doogoo.common.error.ErrorCode;
 import com.doogoo.doogoo.common.error.ErrorResponse;
 import com.doogoo.doogoo.subscription.application.SubscriptionQueryService;
-import com.doogoo.doogoo.subscription.domain.Subscription;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -51,9 +51,8 @@ public class CalendarController {
         if (token == null || !TOKEN_PATTERN.matcher(token).matches()) {
             throw new DoogooException(ErrorCode.INVALID_TOKEN_FORMAT);
         }
-        Subscription subscription = subscriptionQueryService.getByToken(token);
-        subscription.touch();
-        String body = icsService.render(subscription);
+
+        String body = icsService.getIcsByToken(token);
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(TEXT_CALENDAR);
