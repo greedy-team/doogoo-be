@@ -3,6 +3,7 @@ package com.doogoo.doogoo.dodream.domain;
 import com.doogoo.doogoo.catalog.domain.Keyword;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.Set;
 
 @Entity
@@ -28,7 +29,7 @@ public class DoDreamNotice {
     @ElementCollection(fetch = FetchType.LAZY)
     @Enumerated(EnumType.STRING)
     @Column(name = "keyword", nullable = false)
-    private Set<Keyword> keywords;
+    private Set<Keyword> keywords = new HashSet<>();
 
     @Column(nullable = false)
     private String detailUrl;
@@ -46,7 +47,9 @@ public class DoDreamNotice {
         this.applicationEndAt = applicationEndAt;
         this.operatingStartAt = operatingStartAt;
         this.operatingEndAt = operatingEndAt;
-        this.keywords = keywords != null ? keywords : Set.of();
+        if (keywords != null) {
+            this.keywords.addAll(keywords);
+        }
         this.detailUrl = detailUrl;
     }
 
