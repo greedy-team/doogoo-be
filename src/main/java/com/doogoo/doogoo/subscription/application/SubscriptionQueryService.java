@@ -19,7 +19,12 @@ public class SubscriptionQueryService implements SubscriptionReader {
     @Override
     @Transactional(readOnly = true)
     public Subscription getByToken(String token) {
-        return subscriptionRepository.findByToken(token)
+        Subscription sub =  subscriptionRepository.findByToken(token)
                 .orElseThrow(() -> new DoogooException(ErrorCode.TOKEN_NOT_FOUND));
+
+        if (!sub.isEnabled()){
+            throw new DoogooException(ErrorCode.TOKEN_NOT_FOUND);
+        }
+        return sub;
     }
 }

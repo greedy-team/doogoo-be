@@ -4,6 +4,8 @@ import com.doogoo.doogoo.academic.api.dto.IssueAcademicIcsRequest;
 import com.doogoo.doogoo.academic.domain.AcademicNotice;
 import com.doogoo.doogoo.academic.infrastructure.AcademicNoticeRepository;
 import com.doogoo.doogoo.catalog.domain.Keyword;
+import com.doogoo.doogoo.common.error.DoogooException;
+import com.doogoo.doogoo.common.error.ErrorCode;
 import com.doogoo.doogoo.dodream.api.dto.IssueDoDreamIcsRequest;
 import com.doogoo.doogoo.dodream.domain.DoDreamNotice;
 import com.doogoo.doogoo.dodream.infrastructure.DoDreamNoticeRepository;
@@ -16,14 +18,19 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
+import com.doogoo.doogoo.subscription.infrastructure.SubscriptionRepository;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.benmanes.caffeine.cache.Cache;
 import org.springframework.stereotype.Service;
-import tools.jackson.core.JacksonException;
-import tools.jackson.databind.ObjectMapper;
+
 
 @Service
 public class IcsService {
@@ -38,48 +45,71 @@ public class IcsService {
 
     private final AcademicNoticeRepository academicNoticeRepository;
     private final DoDreamNoticeRepository doDreamNoticeRepository;
+    private final SubscriptionRepository subscriptionRepository;
     private final SubscriptionReader subscriptionReader;
     private final ObjectMapper objectMapper;
     private final Cache<String, String> icsCache;
     private final Cache<String, List<AcademicNotice>> academicNoticesCache;
     private final Cache<String, List<DoDreamNotice>> doDreamNoticesCache;
+    private final Semaphore semaphore;
 
     public IcsService(AcademicNoticeRepository academicNoticeRepository,
                       DoDreamNoticeRepository doDreamNoticeRepository,
+                      SubscriptionRepository subscriptionRepository,
                       SubscriptionReader subscriptionReader,
                       ObjectMapper objectMapper,
                       Cache<String, String> icsCache,
                       Cache<String, List<AcademicNotice>> academicNoticesCache,
-                      Cache<String, List<DoDreamNotice>> doDreamNoticesCache) {
+                      Cache<String, List<DoDreamNotice>> doDreamNoticesCache,
+                      Semaphore semaphore) {
         this.academicNoticeRepository = academicNoticeRepository;
         this.doDreamNoticeRepository = doDreamNoticeRepository;
+        this.subscriptionRepository = subscriptionRepository;
         this.subscriptionReader = subscriptionReader;
         this.objectMapper = objectMapper;
         this.icsCache = icsCache;
         this.academicNoticesCache = academicNoticesCache;
         this.doDreamNoticesCache = doDreamNoticesCache;
+        this.semaphore = semaphore;
     }
 
     public String getIcsByToken(String token) {
-        String cached = icsCache.getIfPresent(token);
-        if (cached != null) {
-            return cached;
-        }
-
-        Subscription subscription = subscriptionReader.getByToken(token);
-        subscription.touch();
-
-        String body = render(subscription);
-        icsCache.put(token, body);
-        return body;
-
-
+        Subscription sub = subscriptionReader.getByToken(token);
+        touch(token);
+        String key = sub.getFilterHash();
+        return icsCache.get(key, k -> renderWithLimit(sub));
     }
 
-    public void invalidateAllDataByCrawling() {
+    private String renderWithLimit(Subscription subscription) {
+        boolean acquired = false;
+        try {
+            acquired = semaphore.tryAcquire(5, TimeUnit.SECONDS);
+            if (!acquired) {
+                throw new DoogooException(ErrorCode.TOO_MANY_REQUESTS);
+            }
+            return render(subscription);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException(e);
+        } finally {
+            if (acquired) semaphore.release();
+        }
+    }
+
+    public void invalidateAcademicDataByUpdate() {
         academicNoticesCache.invalidateAll();
+        icsCache.invalidateAll();
+    }
+
+    public void invalidateDoDreamDataByUpdate() {
         doDreamNoticesCache.invalidateAll();
         icsCache.invalidateAll();
+    }
+
+    private void touch(String token) {
+        Instant now = Instant.now();
+        Instant thresh = now.minus(8, ChronoUnit.HOURS);
+        subscriptionRepository.touchIfStale(token, now, thresh);
     }
 
     private String render(Subscription subscription) {
@@ -117,33 +147,20 @@ public class IcsService {
         return sb.toString();
     }
 
-    private List<AcademicNotice> getAcademicNotices() {
-        List<AcademicNotice> cached = academicNoticesCache.getIfPresent(KEY_ACADEMIC);
-        if (cached != null) {
-            return cached;
-        }
 
-        List<AcademicNotice> newData = academicNoticeRepository.findAll();
-        academicNoticesCache.put(KEY_ACADEMIC, newData);
-        return newData;
+    private List<AcademicNotice> getAcademicNotices() {
+        return academicNoticesCache.get(KEY_ACADEMIC, k -> academicNoticeRepository.findAll());
     }
 
     private List<DoDreamNotice> getDoDreamNotices() {
-        List<DoDreamNotice> cached = doDreamNoticesCache.getIfPresent(KEY_DODREAM);
-        if (cached != null) {
-            return cached;
-        }
-
-        List<DoDreamNotice> newData = doDreamNoticeRepository.findAll();
-        doDreamNoticesCache.put(KEY_DODREAM, newData);
-        return newData;
+        return doDreamNoticesCache.get(KEY_DODREAM, k -> doDreamNoticeRepository.findAll());
     }
 
     private <T> T parsePayload(String payload, Class<T> type) {
         if (payload == null || payload.isBlank()) return null;
         try {
             return objectMapper.readValue(payload, type);
-        } catch (JacksonException e) {
+        } catch (JsonProcessingException e) {
             return null;
         }
     }
