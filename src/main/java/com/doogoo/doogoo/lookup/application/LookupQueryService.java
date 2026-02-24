@@ -4,6 +4,7 @@ import com.doogoo.doogoo.lookup.domain.College;
 import com.doogoo.doogoo.lookup.domain.Department;
 import com.doogoo.doogoo.lookup.domain.Grade;
 import com.doogoo.doogoo.lookup.domain.Keyword;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.Arrays;
 import java.util.List;
@@ -45,6 +46,7 @@ public class LookupQueryService {
             @Schema(description = "표시명", example = "1학년") String name) {}
 
     @Schema(description = "학과 한 건 (tags·contractBranch 선택)")
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public record DepartmentItem(
             @Schema(description = "학과 ID", example = "dept-cse") String id,
             @Schema(description = "학과명", example = "컴퓨터공학과") String name,
