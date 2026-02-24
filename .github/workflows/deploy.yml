@@ -17,7 +17,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: "17"
 
       - name: Build
         run: ./gradlew clean bootJar -x test
@@ -38,6 +38,8 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            sudo mv /home/ec2-user/*.jar /opt/doogoo/app.jar
+            set -e
+            ls -al /home/ec2-user/build/libs
+            sudo mv /home/ec2-user/build/libs/*.jar /opt/doogoo/app.jar
             sudo systemctl restart doogoo
             sudo systemctl status doogoo --no-pager
