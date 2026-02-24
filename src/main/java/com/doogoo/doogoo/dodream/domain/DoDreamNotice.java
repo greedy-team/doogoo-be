@@ -16,6 +16,7 @@ public class DoDreamNotice {
     @Column(nullable = false)
     private String title;
 
+    private String departmentId;
     private String departmentName;
 
     private LocalDateTime applicationStartAt;
@@ -34,14 +35,18 @@ public class DoDreamNotice {
     @Column(nullable = false)
     private String detailUrl;
 
+    private String location;
+    private String description;
+
     protected DoDreamNotice() {}
 
-    public DoDreamNotice(String noticeId, String title, String departmentName,
+    public DoDreamNotice(String noticeId, String title, String departmentId, String departmentName,
                          LocalDateTime applicationStartAt, LocalDateTime applicationEndAt,
                          LocalDateTime operatingStartAt, LocalDateTime operatingEndAt,
-                         Set<Keyword> keywords, String detailUrl) {
+                         Set<Keyword> keywords, String detailUrl, String location, String description) {
         this.noticeId = noticeId;
         this.title = title;
+        this.departmentId = departmentId;
         this.departmentName = departmentName;
         this.applicationStartAt = applicationStartAt;
         this.applicationEndAt = applicationEndAt;
@@ -51,10 +56,13 @@ public class DoDreamNotice {
             this.keywords.addAll(keywords);
         }
         this.detailUrl = detailUrl;
+        this.location = location;
+        this.description = description;
     }
 
     public String getNoticeId() { return noticeId; }
     public String getTitle() { return title; }
+    public String getDepartmentId() { return departmentId; }
     public String getDepartmentName() { return departmentName; }
     public java.time.LocalDateTime getApplicationStartAt() { return applicationStartAt; }
     public java.time.LocalDateTime getApplicationEndAt() { return applicationEndAt; }
@@ -62,4 +70,6 @@ public class DoDreamNotice {
     public java.time.LocalDateTime getOperatingEndAt() { return operatingEndAt; }
     public java.util.Set<Keyword> getKeywords() { return keywords; }
     public String getDetailUrl() { return detailUrl; }
+    public String getLocation() { return location; }
+    public String getDescription() { return description; }
 }

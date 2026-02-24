@@ -30,7 +30,14 @@ public class LookupController {
         return new GradesResponse(lookupQueryService.getGrades());
     }
 
-    @Operation(summary = "학과 목록")
+    @Operation(summary = "학부/학과 2계층 목록")
+    @ApiResponse(responseCode = "200", description = "성공")
+    @GetMapping("/colleges")
+    public CollegesResponse colleges() {
+        return new CollegesResponse(lookupQueryService.getColleges());
+    }
+
+    @Operation(summary = "학과 목록 (평면)")
     @ApiResponse(responseCode = "200", description = "성공")
     @GetMapping("/departments")
     public DepartmentsResponse departments() {
@@ -46,8 +53,10 @@ public class LookupController {
 
     @Schema(description = "학년 목록")
     public record GradesResponse(List<IdName> grades) {}
-    @Schema(description = "학과 목록")
+    @Schema(description = "학부·학과 2계층 목록")
+    public record CollegesResponse(List<LookupQueryService.CollegeWithDepartments> colleges) {}
+    @Schema(description = "학과 목록 (평면)")
     public record DepartmentsResponse(List<IdName> departments) {}
     @Schema(description = "키워드 목록")
-    public record KeywordsResponse(List<IdName> keywords) {}
+    public record KeywordsResponse(List<LookupQueryService.KeywordItem> keywords) {}
 }
