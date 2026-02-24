@@ -61,24 +61,30 @@ public class DataSeeder implements ApplicationRunner {
         doDreamNoticeRepository.save(new DoDreamNotice(
                 "seed-dodream-1",
                 "학술제 대회 참가 신청",
+                "dept-cse",
                 "컴퓨터공학과",
                 base.withHour(9).withMinute(0).withSecond(0).withNano(0),
                 base.plusDays(7).withHour(18).withMinute(0).withSecond(0).withNano(0),
                 base.plusDays(10).withHour(10).withMinute(0).withSecond(0).withNano(0),
                 base.plusDays(11).withHour(17).withMinute(0).withSecond(0).withNano(0),
                 Set.of(Keyword.COMPETITION),
-                "https://example.com/dodream/1"
+                "https://example.com/dodream/1",
+                "대양AI센터 B101호",
+                "AI 해커톤..."
         ));
         doDreamNoticeRepository.save(new DoDreamNotice(
                 "seed-dodream-2",
                 "취창업 특강 안내",
-                "경영학과",
+                "dept-business",
+                "경영학부",
                 base.plusDays(2).withHour(9).withMinute(0).withSecond(0).withNano(0),
                 base.plusDays(9).withHour(18).withMinute(0).withSecond(0).withNano(0),
                 base.plusDays(3).withHour(14).withMinute(0).withSecond(0).withNano(0),
                 base.plusDays(3).withHour(16).withMinute(0).withSecond(0).withNano(0),
                 Set.of(Keyword.CAREER),
-                "https://example.com/dodream/2"
+                "https://example.com/dodream/2",
+                null,
+                null
         ));
     }
 }

@@ -29,11 +29,14 @@ public class DoDreamNoticeQueryService {
         return new DoDreamNoticesResponse.NoticeItem(
                 n.getNoticeId(),
                 n.getTitle(),
+                n.getDepartmentId(),
                 n.getDepartmentName(),
                 n.getApplicationStartAt(),
                 n.getApplicationEndAt(),
                 n.getOperatingStartAt(),
                 n.getOperatingEndAt(),
+                n.getLocation(),
+                n.getDescription(),
                 keywordIds,
                 n.getDetailUrl()
         );

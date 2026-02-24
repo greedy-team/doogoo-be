@@ -13,11 +13,14 @@ public record DoDreamNoticesResponse(
     public record NoticeItem(
             String noticeId,
             String title,
+            String departmentId,
             String departmentName,
             LocalDateTime applicationStartAt,
             LocalDateTime applicationEndAt,
             LocalDateTime operatingStartAt,
             LocalDateTime operatingEndAt,
+            String location,
+            String description,
             List<String> keywordIds,
             String detailUrl
     ) {}
