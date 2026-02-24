@@ -4,22 +4,33 @@ import com.doogoo.doogoo.academic.api.dto.IssueAcademicIcsRequest;
 import com.doogoo.doogoo.academic.domain.AcademicNotice;
 import com.doogoo.doogoo.academic.infrastructure.AcademicNoticeRepository;
 import com.doogoo.doogoo.catalog.domain.Keyword;
+import com.doogoo.doogoo.common.error.DoogooException;
+import com.doogoo.doogoo.common.error.ErrorCode;
 import com.doogoo.doogoo.dodream.api.dto.IssueDoDreamIcsRequest;
 import com.doogoo.doogoo.dodream.domain.DoDreamNotice;
 import com.doogoo.doogoo.dodream.infrastructure.DoDreamNoticeRepository;
+import com.doogoo.doogoo.subscription.application.SubscriptionReader;
 import com.doogoo.doogoo.subscription.domain.SourceType;
 import com.doogoo.doogoo.subscription.domain.Subscription;
+
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
+
+import com.doogoo.doogoo.subscription.infrastructure.SubscriptionRepository;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.benmanes.caffeine.cache.Cache;
 import org.springframework.stereotype.Service;
-import tools.jackson.core.JacksonException;
-import tools.jackson.databind.ObjectMapper;
+
 
 @Service
 public class IcsService {
@@ -29,20 +40,79 @@ public class IcsService {
     private static final DateTimeFormatter ICS_SEOUL = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss").withZone(SEOUL);
     private static final Pattern SPECIAL = Pattern.compile("([\\\\,;])");
     private static final int DEFAULT_ALARM_MINUTES = 60;
+    private static final String KEY_ACADEMIC = "ACADEMIC";
+    private static final String KEY_DODREAM = "DODREAM";
 
     private final AcademicNoticeRepository academicNoticeRepository;
     private final DoDreamNoticeRepository doDreamNoticeRepository;
+    private final SubscriptionRepository subscriptionRepository;
+    private final SubscriptionReader subscriptionReader;
     private final ObjectMapper objectMapper;
+    private final Cache<String, String> icsCache;
+    private final Cache<String, List<AcademicNotice>> academicNoticesCache;
+    private final Cache<String, List<DoDreamNotice>> doDreamNoticesCache;
+    private final Semaphore semaphore;
 
     public IcsService(AcademicNoticeRepository academicNoticeRepository,
                       DoDreamNoticeRepository doDreamNoticeRepository,
-                      ObjectMapper objectMapper) {
+                      SubscriptionRepository subscriptionRepository,
+                      SubscriptionReader subscriptionReader,
+                      ObjectMapper objectMapper,
+                      Cache<String, String> icsCache,
+                      Cache<String, List<AcademicNotice>> academicNoticesCache,
+                      Cache<String, List<DoDreamNotice>> doDreamNoticesCache,
+                      Semaphore semaphore) {
         this.academicNoticeRepository = academicNoticeRepository;
         this.doDreamNoticeRepository = doDreamNoticeRepository;
+        this.subscriptionRepository = subscriptionRepository;
+        this.subscriptionReader = subscriptionReader;
         this.objectMapper = objectMapper;
+        this.icsCache = icsCache;
+        this.academicNoticesCache = academicNoticesCache;
+        this.doDreamNoticesCache = doDreamNoticesCache;
+        this.semaphore = semaphore;
     }
 
-    public String render(Subscription subscription) {
+    public String getIcsByToken(String token) {
+        Subscription sub = subscriptionReader.getByToken(token);
+        touch(token);
+        String key = sub.getFilterHash();
+        return icsCache.get(key, k -> renderWithLimit(sub));
+    }
+
+    private String renderWithLimit(Subscription subscription) {
+        boolean acquired = false;
+        try {
+            acquired = semaphore.tryAcquire(5, TimeUnit.SECONDS);
+            if (!acquired) {
+                throw new DoogooException(ErrorCode.TOO_MANY_REQUESTS);
+            }
+            return render(subscription);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException(e);
+        } finally {
+            if (acquired) semaphore.release();
+        }
+    }
+
+    public void invalidateAcademicDataByUpdate() {
+        academicNoticesCache.invalidateAll();
+        icsCache.invalidateAll();
+    }
+
+    public void invalidateDoDreamDataByUpdate() {
+        doDreamNoticesCache.invalidateAll();
+        icsCache.invalidateAll();
+    }
+
+    private void touch(String token) {
+        Instant now = Instant.now();
+        Instant thresh = now.minus(8, ChronoUnit.HOURS);
+        subscriptionRepository.touchIfStale(token, now, thresh);
+    }
+
+    private String render(Subscription subscription) {
         String now = ICS_UTC.format(Instant.now());
         StringBuilder sb = new StringBuilder();
         sb.append("BEGIN:VCALENDAR\r\n");
@@ -52,7 +122,7 @@ public class IcsService {
         sb.append("METHOD:PUBLISH\r\n");
 
         if (subscription.getSourceType() == SourceType.ACADEMIC) {
-            List<AcademicNotice> all = academicNoticeRepository.findAll();
+            List<AcademicNotice> all = getAcademicNotices();
             IssueAcademicIcsRequest filter = parsePayload(subscription.getPayload(), IssueAcademicIcsRequest.class);
             List<AcademicNotice> filtered = all.stream().filter(n -> passesAcademicFilter(n, filter)).toList();
             if (filtered.isEmpty()) {
@@ -62,7 +132,7 @@ public class IcsService {
                 appendAcademicEvent(sb, subscription, n, now);
             }
         } else if (subscription.getSourceType() == SourceType.DODREAM) {
-            List<DoDreamNotice> all = doDreamNoticeRepository.findAll();
+            List<DoDreamNotice> all = getDoDreamNotices();
             IssueDoDreamIcsRequest filter = parsePayload(subscription.getPayload(), IssueDoDreamIcsRequest.class);
             List<DoDreamNotice> filtered = all.stream().filter(n -> passesDoDreamFilter(n, filter)).toList();
             if (filtered.isEmpty()) {
@@ -77,11 +147,20 @@ public class IcsService {
         return sb.toString();
     }
 
+
+    private List<AcademicNotice> getAcademicNotices() {
+        return academicNoticesCache.get(KEY_ACADEMIC, k -> academicNoticeRepository.findAll());
+    }
+
+    private List<DoDreamNotice> getDoDreamNotices() {
+        return doDreamNoticesCache.get(KEY_DODREAM, k -> doDreamNoticeRepository.findAll());
+    }
+
     private <T> T parsePayload(String payload, Class<T> type) {
         if (payload == null || payload.isBlank()) return null;
         try {
             return objectMapper.readValue(payload, type);
-        } catch (JacksonException e) {
+        } catch (JsonProcessingException e) {
             return null;
         }
     }
@@ -148,7 +227,7 @@ public class IcsService {
         LocalDateTime end = n.getOperatingEndAt() != null ? n.getOperatingEndAt() : n.getApplicationEndAt();
         if (end == null && start != null) end = start.plusHours(1);
         String startStr = start != null ? ICS_SEOUL.format(start.atZone(SEOUL)) : now.replace("Z", "");
-        String endStr =end != null ? ICS_SEOUL.format(end.atZone(SEOUL)) : startStr;
+        String endStr = end != null ? ICS_SEOUL.format(end.atZone(SEOUL)) : startStr;
         int alarmMin = subscription.getAlarmMinutesBefore() != null ? subscription.getAlarmMinutesBefore() : DEFAULT_ALARM_MINUTES;
         String desc = "두드림 공지";
         if (n.getKeywords() != null && !n.getKeywords().isEmpty()) {
@@ -184,3 +263,4 @@ public class IcsService {
         return s.replace("\\", "\\\\").replace(";", "\\;").replace(",", "\\,").replace("\n", "\\n");
     }
 }
+

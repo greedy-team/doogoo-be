@@ -2,12 +2,16 @@ package com.doogoo.doogoo.subscription.application;
 
 import com.doogoo.doogoo.common.error.DoogooException;
 import com.doogoo.doogoo.common.error.ErrorCode;
+import com.doogoo.doogoo.common.util.Sha256;
 import com.doogoo.doogoo.subscription.domain.SourceType;
 import com.doogoo.doogoo.subscription.domain.Subscription;
 import com.doogoo.doogoo.subscription.infrastructure.SubscriptionRepository;
-import tools.jackson.core.JacksonException;
-import tools.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.core.JacksonException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.beans.factory.annotation.Qualifier;
+
 import java.security.SecureRandom;
+
 import org.springframework.stereotype.Service;
 
 @Service
@@ -19,7 +23,7 @@ public class SubscriptionIssueService {
     private final SubscriptionRepository subscriptionRepository;
     private final ObjectMapper objectMapper;
 
-    public SubscriptionIssueService(SubscriptionRepository subscriptionRepository, ObjectMapper objectMapper) {
+    public SubscriptionIssueService(SubscriptionRepository subscriptionRepository, @Qualifier("canonicalObjectMapper") ObjectMapper objectMapper) {
         this.subscriptionRepository = subscriptionRepository;
         this.objectMapper = objectMapper;
     }
@@ -38,8 +42,12 @@ public class SubscriptionIssueService {
         do {
             token = generateBase62Token();
         } while (subscriptionRepository.existsByToken(token));
-
-        Subscription subscription = new Subscription(token, sourceType, payload, alarmEnabled, alarmMinutesBefore);
+        Integer newAlarmMinutes = alarmEnabled ? alarmMinutesBefore : null;
+        String filterHash = Sha256.sha256(sourceType.name() + "|"
+                + payload + "|"
+                + "alarmEnabled=" + alarmEnabled + "|"
+                + "alarmMinutesBefore=" + newAlarmMinutes);
+        Subscription subscription = new Subscription(token, sourceType, payload, alarmEnabled, newAlarmMinutes, filterHash);
         return subscriptionRepository.save(subscription);
     }
 
