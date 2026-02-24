@@ -44,15 +44,15 @@ public class AcademicController {
     @Operation(summary = "학사 ICS 발급", description = "구독 토큰·icsUrl·downloadUrl 반환")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "성공"),
-            @ApiResponse(responseCode = "400", description = "잘못된 요청 (예: alarmEnabled true인데 alarmMinutesBefore 없음)", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+            @ApiResponse(responseCode = "400", description = "잘못된 요청", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @PostMapping("/ics")
     public IssueIcsResponse issueIcs(@RequestBody IssueAcademicIcsRequest request) {
         Subscription subscription = subscriptionIssueService.issue(
                 SourceType.ACADEMIC,
                 request,
-                request.alarmEnabled(),
-                request.alarmMinutesBefore()
+                false,
+                null
         );
         String baseUrl = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
         String icsUrl = baseUrl + "/cal/" + subscription.getToken() + ".ics";

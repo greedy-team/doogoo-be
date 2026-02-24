@@ -51,8 +51,8 @@ public class DoDreamController {
         Subscription subscription = subscriptionIssueService.issue(
                 SourceType.DODREAM,
                 request,
-                request.alarmEnabled(),
-                request.alarmMinutesBefore()
+                false,
+                null
         );
         String baseUrl = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
         String icsUrl = baseUrl + "/cal/" + subscription.getToken() + ".ics";
