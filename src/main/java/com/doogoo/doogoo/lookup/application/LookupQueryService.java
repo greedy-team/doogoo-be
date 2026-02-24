@@ -23,7 +23,7 @@ public class LookupQueryService {
                         c.displayName(),
                         Arrays.stream(Department.values())
                                 .filter(d -> d.college() == c)
-                                .map(d -> new IdName(d.id(), d.displayName()))
+                                .map(d -> new DepartmentItem(d.id(), d.displayName(), d.tags(), d.contractBranch()))
                                 .collect(Collectors.toList())))
                 .collect(Collectors.toList());
     }
@@ -40,7 +40,9 @@ public class LookupQueryService {
 
     public record IdName(String id, String name) {}
 
+    public record DepartmentItem(String id, String name, List<String> tags, String contractBranch) {}
+
     public record KeywordItem(String id, String name, String description, String icon) {}
 
-    public record CollegeWithDepartments(String id, String name, List<IdName> departments) {}
+    public record CollegeWithDepartments(String id, String name, List<DepartmentItem> departments) {}
 }
