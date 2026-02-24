@@ -175,13 +175,14 @@ public class IcsService {
 
     private boolean passesDoDreamFilter(DoDreamNotice notice, IssueDoDreamIcsRequest filter) {
         if (filter == null) return true;
-        String dept = notice.getDepartmentName();
-        if (dept != null && filter.selectedDepartmentId() != null && !dept.equals(filter.selectedDepartmentId())) {
+        String deptId = notice.getDepartmentId() != null ? notice.getDepartmentId() : notice.getDepartmentName();
+        if ("all".equals(deptId)) return true;
+        if (deptId != null && filter.selectedDepartmentId() != null && !deptId.equals(filter.selectedDepartmentId())) {
             return false;
         }
         if (filter.selectedMinorDepartmentId() != null) {
-            if (dept == null) return true;
-            if (!dept.equals(filter.selectedMinorDepartmentId())) return false;
+            if (deptId == null) return true;
+            if (!deptId.equals(filter.selectedMinorDepartmentId())) return false;
         }
         List<String> keywordIds = filter.selectedKeywordId();
         if (keywordIds != null && !keywordIds.isEmpty()) {
