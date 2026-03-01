@@ -10,3 +10,7 @@ spring:
   jpa:
     hibernate:
       ddl-auto: create-drop
+
+cors:
+  allowed-origins: "*"
+

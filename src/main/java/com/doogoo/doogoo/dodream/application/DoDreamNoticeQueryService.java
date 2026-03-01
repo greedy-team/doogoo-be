@@ -1,44 +1,43 @@
 package com.doogoo.doogoo.dodream.application;
 
-import com.doogoo.doogoo.catalog.domain.Keyword;
 import com.doogoo.doogoo.dodream.api.dto.DoDreamNoticesResponse;
-import com.doogoo.doogoo.dodream.domain.DoDreamNotice;
-import com.doogoo.doogoo.dodream.infrastructure.DoDreamNoticeRepository;
-import java.util.List;
-import java.util.stream.Collectors;
+import com.doogoo.doogoo.dodream.domain.Event;
+import com.doogoo.doogoo.dodream.domain.EventStatus;
+import com.doogoo.doogoo.dodream.infrastructure.EventRepository;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 public class DoDreamNoticeQueryService {
 
-    private final DoDreamNoticeRepository doDreamNoticeRepository;
+    private final EventRepository eventRepository;
 
-    public DoDreamNoticeQueryService(DoDreamNoticeRepository doDreamNoticeRepository) {
-        this.doDreamNoticeRepository = doDreamNoticeRepository;
+    public DoDreamNoticeQueryService(EventRepository eventRepository) {
+        this.eventRepository = eventRepository;
     }
 
     public DoDreamNoticesResponse getNotices() {
-        List<DoDreamNoticesResponse.NoticeItem> items = doDreamNoticeRepository.findAll().stream()
+        List<DoDreamNoticesResponse.NoticeItem> items = eventRepository.findByStatus(EventStatus.OPEN).stream()
                 .map(this::toItem)
-                .collect(Collectors.toList());
+                .toList();
         return new DoDreamNoticesResponse(items);
     }
 
-    private DoDreamNoticesResponse.NoticeItem toItem(DoDreamNotice n) {
-        List<String> keywordIds = n.getKeywords() == null ? List.of() : n.getKeywords().stream().map(Keyword::id).collect(Collectors.toList());
+    private DoDreamNoticesResponse.NoticeItem toItem(Event event) {
         return new DoDreamNoticesResponse.NoticeItem(
-                n.getNoticeId(),
-                n.getTitle(),
-                n.getDepartmentId(),
-                n.getDepartmentName(),
-                n.getApplicationStartAt(),
-                n.getApplicationEndAt(),
-                n.getOperatingStartAt(),
-                n.getOperatingEndAt(),
-                n.getLocation(),
-                n.getDescription(),
-                keywordIds,
-                n.getDetailUrl()
+                "dodream-" + event.getDodreamId(),
+                event.getTitle(),
+                event.getDepartmentId(),
+                event.getDepartment(),
+                event.getApplyStart(),
+                event.getApplyEnd(),
+                event.getOperateStart(),
+                event.getOperateEnd(),
+                event.getLocation(),
+                event.getDescription(),
+                event.getKeywordIds(),
+                event.getDodreamUrl()
         );
     }
 }

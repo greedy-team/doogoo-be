@@ -1,7 +1,7 @@
 package com.doogoo.doogoo.global.config;
 
-import com.doogoo.doogoo.academic.domain.AcademicNotice;
-import com.doogoo.doogoo.dodream.domain.DoDreamNotice;
+import com.doogoo.doogoo.academic.domain.AcademicSchedule;
+import com.doogoo.doogoo.dodream.domain.Event;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 
@@ -24,7 +24,7 @@ public class CacheConfig {
     }
 
     @Bean
-    public Cache<String, List<AcademicNotice>> academicNoticesCache() {
+    public Cache<String, List<AcademicSchedule>> academicNoticesCache() {
         return Caffeine.newBuilder()
                 .maximumSize(1)
                 .recordStats()
@@ -32,7 +32,7 @@ public class CacheConfig {
     }
 
     @Bean
-    public Cache<String, List<DoDreamNotice>> doDreamNoticesCache() {
+    public Cache<String, List<Event>> doDreamNoticesCache() {
         return Caffeine.newBuilder()
                 .maximumSize(1)
                 .recordStats()

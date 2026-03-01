@@ -1,9 +1,11 @@
 package com.doogoo.doogoo.lookup.domain;
 
+import java.util.Arrays;
+
 public enum Grade {
-    FIRST("1", "1학년"),
+    FIRST ("1", "1학년"),
     SECOND("2", "2학년"),
-    THIRD("3", "3학년"),
+    THIRD ("3", "3학년"),
     FOURTH("4", "4학년이상");
 
     private final String id;
@@ -16,4 +18,11 @@ public enum Grade {
 
     public String id() { return id; }
     public String displayName() { return displayName; }
+
+    public static Grade fromId(String id) {
+        return Arrays.stream(values())
+                .filter(g -> g.id.equals(id))
+                .findFirst()
+                .orElse(null);
+    }
 }
