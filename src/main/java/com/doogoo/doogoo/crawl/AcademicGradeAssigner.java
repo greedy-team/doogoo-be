@@ -21,7 +21,6 @@ public class AcademicGradeAssigner {
 
     public List<AcademicScheduleDto> assign(int year, String department, LocalDate startDate, LocalDate endDate, String content) {
         if (content.contains("수강신청")) {
-            // 계절학기 수강신청은 학년 구분 없이 전체
             if (content.contains("계절")) {
                 return List.of(new AcademicScheduleDto(year, department, startDate, endDate, content, null));
             }
@@ -36,12 +35,6 @@ public class AcademicGradeAssigner {
         return List.of(new AcademicScheduleDto(year, department, startDate, endDate, content, null));
     }
 
-    /**
-     * 수강신청 기간을 영업일(주말·공휴일 제외)별로 쪼개 학년을 배정.
-     * 주말·공휴일은 결과에 포함하지 않음 (캘린더에 미표시).
-     *
-     * 예) 26.8.14~8.21 → 8.14=4학년, 8.18=3학년, 8.19=2학년, 8.20=1학년, 8.21=전체
-     */
     private List<AcademicScheduleDto> splitCourseRegistration(int year, String department, LocalDate startDate, LocalDate endDate, String content) {
         long businessDays = businessDayCalculator.countBusinessDays(startDate, endDate);
         String[] gradeOrder = businessDays >= 5 ? GRADE_FULL : GRADE_SHORT;
