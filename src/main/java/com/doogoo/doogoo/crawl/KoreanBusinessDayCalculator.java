@@ -7,11 +7,6 @@ import java.time.LocalDate;
 import java.time.MonthDay;
 import java.util.Set;
 
-/**
- * 주말을 비영업일로 처리한다.
- * 26년 기준 수강신청에 영향을 주는 날짜만 적어 둠
- * 추후 공공데이터포털 한국천문연구원 특일 API 연동 필요
- */
 @Component
 public class KoreanBusinessDayCalculator {
 
