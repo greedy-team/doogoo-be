@@ -4,7 +4,6 @@ import com.doogoo.doogoo.calendar.application.IcsService;
 import com.doogoo.doogoo.common.error.DoogooException;
 import com.doogoo.doogoo.common.error.ErrorCode;
 import com.doogoo.doogoo.common.error.ErrorResponse;
-import com.doogoo.doogoo.subscription.application.SubscriptionQueryService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -29,11 +28,9 @@ public class CalendarController {
     private static final MediaType TEXT_CALENDAR = MediaType.parseMediaType("text/calendar; charset=utf-8");
     private static final Pattern TOKEN_PATTERN = Pattern.compile("^[A-Za-z0-9]{6,64}$");
 
-    private final SubscriptionQueryService subscriptionQueryService;
     private final IcsService icsService;
 
-    public CalendarController(SubscriptionQueryService subscriptionQueryService, IcsService icsService) {
-        this.subscriptionQueryService = subscriptionQueryService;
+    public CalendarController(IcsService icsService) {
         this.icsService = icsService;
     }
 
