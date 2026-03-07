@@ -44,21 +44,21 @@ public class DataSeeder implements ApplicationRunner {
         int year = base.getYear();
         // 수강신청: 오늘~+4일(영업일 기준 5일), 4→3→2→1→전체 순 배정됨
         academicScheduleRepository.save(AcademicSchedule.create(
-                year, "학부", base.plusDays(1), base.plusDays(1), "수강신청", "4"));
+                year, base.plusDays(1), base.plusDays(1), "수강신청", "4"));
         academicScheduleRepository.save(AcademicSchedule.create(
-                year, "학부", base.plusDays(2), base.plusDays(2), "수강신청", "3"));
+                year, base.plusDays(2), base.plusDays(2), "수강신청", "3"));
         academicScheduleRepository.save(AcademicSchedule.create(
-                year, "학부", base.plusDays(3), base.plusDays(3), "수강신청", "2"));
+                year, base.plusDays(3), base.plusDays(3), "수강신청", "2"));
         academicScheduleRepository.save(AcademicSchedule.create(
-                year, "학부", base.plusDays(4), base.plusDays(4), "수강신청", "1"));
+                year, base.plusDays(4), base.plusDays(4), "수강신청", "1"));
         academicScheduleRepository.save(AcademicSchedule.create(
-                year, "학부", base.plusDays(5), base.plusDays(5), "수강신청", null));
+                year, base.plusDays(5), base.plusDays(5), "수강신청", null));
         academicScheduleRepository.save(AcademicSchedule.create(
-                year, "학부", base.plusDays(10), base.plusDays(10), "입학식", "1"));
+                year, base.plusDays(10), base.plusDays(10), "입학식", "1"));
         academicScheduleRepository.save(AcademicSchedule.create(
-                year, "학부", base.plusDays(20), base.plusDays(20), "제80회 학위수여식", "4"));
+                year, base.plusDays(20), base.plusDays(20), "제80회 학위수여식", "4"));
         academicScheduleRepository.save(AcademicSchedule.create(
-                year, "학부", base.plusDays(30), base.plusDays(40), "1학기 수업 기간", null));
+                year, base.plusDays(30), base.plusDays(40), "1학기 수업 기간", null));
     }
 
     private void seedEvents() {
