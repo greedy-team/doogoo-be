@@ -55,7 +55,7 @@ public class CrawlScheduler {
         this.academicSyncService = academicSyncService;
     }
 
-    @Scheduled(cron = "0 0 */6 * * *", zone = "Asia/Seoul")
+    @Scheduled(cron = "0 0 0 */2 * *", zone = "Asia/Seoul")
     public void regularCrawl() {
         log.info("=== 정기 크롤링 시작 ===");
         int newCount = 0;
