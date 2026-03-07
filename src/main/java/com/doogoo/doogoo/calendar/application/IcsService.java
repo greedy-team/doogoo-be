@@ -87,8 +87,18 @@ public class IcsService {
 
     public String getIcsByToken(String token) {
         Subscription sub = getSubscriptionByToken(token);
-        String key = sub.getFilterHash();
+        String key = sub.getSourceType().name() + ":" + sub.getFilterHash();
         return icsCache.get(key, k -> renderWithLimit(sub));
+    }
+
+    public void invalidateAcademicDataByUpdate() {
+        academicNoticesCache.invalidateAll();
+        invalidateIcsCacheBySourceType(KEY_ACADEMIC);
+    }
+
+    public void invalidateDoDreamDataByUpdate() {
+        doDreamNoticesCache.invalidateAll();
+        invalidateIcsCacheBySourceType(KEY_DODREAM);
     }
 
     private String renderWithLimit(Subscription subscription) {
@@ -109,14 +119,9 @@ public class IcsService {
         subscriptionRepository.updateLastAccessedAtByToken(token, Instant.now());
     }
 
-    public void invalidateAcademicDataByUpdate() {
-        academicNoticesCache.invalidateAll();
-        icsCache.invalidateAll();
-    }
 
-    public void invalidateDoDreamDataByUpdate() {
-        doDreamNoticesCache.invalidateAll();
-        icsCache.invalidateAll();
+    private void invalidateIcsCacheBySourceType(String type) {
+        icsCache.asMap().keySet().removeIf(key -> key.startsWith(type + ":"));
     }
 
     private String render(Subscription subscription) {
