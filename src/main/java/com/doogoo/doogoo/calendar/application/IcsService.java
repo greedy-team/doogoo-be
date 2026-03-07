@@ -208,7 +208,7 @@ public class IcsService {
         sb.append("DTSTART;TZID=Asia/Seoul:").append(startStr).append("\r\n");
         sb.append("DTEND;TZID=Asia/Seoul:").append(endStr).append("\r\n");
         sb.append("SUMMARY:").append(escapeIcsText("[학사] " + (n.getContent() != null ? n.getContent() : ""))).append("\r\n");
-        sb.append("DESCRIPTION:").append(escape(n.getDepartment() != null ? n.getDepartment() : "학사 공지")).append("\r\n");
+        sb.append("DESCRIPTION:").append(escape("학사 공지")).append("\r\n");
         if (subscription.isAlarmEnabled()) {
             sb.append("BEGIN:VALARM\r\n");
             sb.append("TRIGGER:-PT").append(alarmMin).append("M\r\n");

@@ -30,16 +30,16 @@ public class AcademicScheduleSyncService {
     @Transactional
     public void replaceByYear(int year, List<AcademicScheduleDto> dtos) {
         repository.deleteAllByYear(year);
-        // DB unique key(year, department, start_date, content) 기준으로 중복 제거
+        // DB unique key(year, start_date, content) 기준으로 중복 제거
         // endDate가 달라도 같은 키면 첫 번째 것만 유지
         Map<String, AcademicScheduleDto> deduped = new LinkedHashMap<>();
         for (AcademicScheduleDto dto : dtos) {
-            String key = dto.year() + "|" + dto.department() + "|" + dto.startDate() + "|" + dto.content();
+            String key = dto.year() + "|" + dto.startDate() + "|" + dto.content();
             deduped.putIfAbsent(key, dto);
         }
         List<AcademicSchedule> entities = deduped.values().stream()
                 .map(dto -> AcademicSchedule.create(
-                        dto.year(), dto.department(), dto.startDate(), dto.endDate(), dto.content(), dto.gradeId()))
+                        dto.year(), dto.startDate(), dto.endDate(), dto.content(), dto.gradeId()))
                 .toList();
         repository.saveAll(entities);
         icsService.invalidateAcademicDataByUpdate();

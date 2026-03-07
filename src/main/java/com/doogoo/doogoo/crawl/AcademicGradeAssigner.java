@@ -19,23 +19,23 @@ public class AcademicGradeAssigner {
         this.businessDayCalculator = businessDayCalculator;
     }
 
-    public List<AcademicScheduleDto> assign(int year, String department, LocalDate startDate, LocalDate endDate, String content) {
+    public List<AcademicScheduleDto> assign(int year, LocalDate startDate, LocalDate endDate, String content) {
         if (content.contains("수강신청")) {
             if (content.contains("계절")) {
-                return List.of(new AcademicScheduleDto(year, department, startDate, endDate, content, null));
+                return List.of(new AcademicScheduleDto(year, startDate, endDate, content, null));
             }
-            return splitCourseRegistration(year, department, startDate, endDate, content);
+            return splitCourseRegistration(year, startDate, endDate, content);
         }
         if (content.contains("졸업식") || content.contains("학위수여식")) {
-            return List.of(new AcademicScheduleDto(year, department, startDate, endDate, content, "4"));
+            return List.of(new AcademicScheduleDto(year, startDate, endDate, content, "4"));
         }
         if (content.contains("입학식") || content.contains("전공배정")) {
-            return List.of(new AcademicScheduleDto(year, department, startDate, endDate, content, "1"));
+            return List.of(new AcademicScheduleDto(year, startDate, endDate, content, "1"));
         }
-        return List.of(new AcademicScheduleDto(year, department, startDate, endDate, content, null));
+        return List.of(new AcademicScheduleDto(year, startDate, endDate, content, null));
     }
 
-    private List<AcademicScheduleDto> splitCourseRegistration(int year, String department, LocalDate startDate, LocalDate endDate, String content) {
+    private List<AcademicScheduleDto> splitCourseRegistration(int year, LocalDate startDate, LocalDate endDate, String content) {
         long businessDays = businessDayCalculator.countBusinessDays(startDate, endDate);
         String[] gradeOrder = businessDays >= 5 ? GRADE_FULL : GRADE_SHORT;
 
@@ -46,7 +46,7 @@ public class AcademicGradeAssigner {
         while (!current.isAfter(endDate)) {
             if (businessDayCalculator.isBusinessDay(current)) {
                 String gradeId = gradeIndex < gradeOrder.length ? gradeOrder[gradeIndex] : null;
-                result.add(new AcademicScheduleDto(year, department, current, current, content, gradeId));
+                result.add(new AcademicScheduleDto(year, current, current, content, gradeId));
                 gradeIndex++;
             }
             current = current.plusDays(1);
