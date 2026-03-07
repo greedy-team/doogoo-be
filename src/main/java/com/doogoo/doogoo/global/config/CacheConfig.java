@@ -2,6 +2,7 @@ package com.doogoo.doogoo.global.config;
 
 import com.doogoo.doogoo.academic.domain.AcademicSchedule;
 import com.doogoo.doogoo.dodream.domain.Event;
+import com.doogoo.doogoo.subscription.domain.Subscription;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 
@@ -35,6 +36,15 @@ public class CacheConfig {
     public Cache<String, List<Event>> doDreamNoticesCache() {
         return Caffeine.newBuilder()
                 .maximumSize(1)
+                .recordStats()
+                .build();
+    }
+
+    @Bean
+    public Cache<String, Subscription> tokenCache(){
+        return Caffeine.newBuilder()
+                .expireAfterWrite(1,TimeUnit.DAYS)
+                .maximumSize(100000)
                 .recordStats()
                 .build();
     }

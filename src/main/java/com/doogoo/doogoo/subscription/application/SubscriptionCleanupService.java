@@ -10,16 +10,16 @@ import java.time.temporal.ChronoUnit;
 
 @Service
 public class SubscriptionCleanupService {
-    private final SubscriptionRepository  subscriptionRepository;
+    private final SubscriptionRepository subscriptionRepository;
 
-    public SubscriptionCleanupService(SubscriptionRepository subscriptionRepository){
+    public SubscriptionCleanupService(SubscriptionRepository subscriptionRepository) {
         this.subscriptionRepository = subscriptionRepository;
     }
 
-    @Scheduled(cron = "0 0 1 * * *", zone = "Asia/Seoul")
+    @Scheduled(cron = "0 0 1 * * MON", zone = "Asia/Seoul")
     @Transactional
-    public void disableSubscription(){
-        Instant inactiveBefore = Instant.now().minus(15, ChronoUnit.DAYS);
-        subscriptionRepository.disableInactive(inactiveBefore);
+    public void deleteSubscription() {
+        Instant inactiveBefore = Instant.now().minus(30, ChronoUnit.DAYS);
+        subscriptionRepository.deleteInactive(inactiveBefore);
     }
 }
