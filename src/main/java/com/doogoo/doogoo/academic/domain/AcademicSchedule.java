@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
 @Entity
 @Table(
         name = "academic_schedule",
-        uniqueConstraints = @UniqueConstraint(columnNames = {"schedule_year", "department", "start_date", "content"})
+        uniqueConstraints = @UniqueConstraint(columnNames = {"schedule_year", "start_date", "content"})
 )
 public class AcademicSchedule {
 
@@ -26,7 +26,6 @@ public class AcademicSchedule {
 
     @Column(name = "schedule_year", nullable = false)
     private int year;
-    private String department;
     private LocalDate startDate;
     private LocalDate endDate;
 
@@ -51,10 +50,9 @@ public class AcademicSchedule {
         updatedAt = LocalDateTime.now();
     }
 
-    public static AcademicSchedule create(int year, String department, LocalDate startDate, LocalDate endDate, String content, String gradeId) {
+    public static AcademicSchedule create(int year, LocalDate startDate, LocalDate endDate, String content, String gradeId) {
         AcademicSchedule s = new AcademicSchedule();
         s.year = year;
-        s.department = department;
         s.startDate = startDate;
         s.endDate = endDate;
         s.content = content;
@@ -64,7 +62,6 @@ public class AcademicSchedule {
 
     public Long getId() { return id; }
     public int getYear() { return year; }
-    public String getDepartment() { return department; }
     public LocalDate getStartDate() { return startDate; }
     public LocalDate getEndDate() { return endDate; }
     public String getContent() { return content; }

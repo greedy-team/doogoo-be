@@ -40,16 +40,15 @@ public class AcademicParser {
             if (cells.size() != 5) continue;
 
             try {
-                String department = cells.get(2).text().trim();
-                String period     = cells.get(3).text().trim();
-                String content    = cells.get(4).text().trim();
+                String period  = cells.get(3).text().trim();
+                String content = cells.get(4).text().trim();
 
                 if (content.isBlank()) continue;
 
                 LocalDate[] dates = periodParser.parse(period, year);
                 if (dates == null) continue;
 
-                result.addAll(gradeAssigner.assign(year, department, dates[0], dates[1], content));
+                result.addAll(gradeAssigner.assign(year, dates[0], dates[1], content));
 
             } catch (Exception e) {
                 log.warn("[{}] {}: year={}, {}", ErrorCode.PARSE_FAILED.getCode(), ErrorCode.PARSE_FAILED.getMessage(), year, e.getMessage(), e);
