@@ -94,10 +94,8 @@ public class IcsService {
     private String renderWithLimit(Subscription subscription) {
         boolean acquired = false;
         try {
-            acquired = semaphore.tryAcquire(5, TimeUnit.SECONDS);
-            if (!acquired) {
-                throw new DoogooException(ErrorCode.TOO_MANY_REQUESTS);
-            }
+            semaphore.acquire();
+            acquired = true;
             return render(subscription);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
