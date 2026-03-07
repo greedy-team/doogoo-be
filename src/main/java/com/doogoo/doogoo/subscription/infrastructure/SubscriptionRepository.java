@@ -34,7 +34,10 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, Long
            UPDATE Subscription s
            SET s.enabled = false
            WHERE s.enabled = true
-           AND (s.lastAccessedAt is null OR s.lastAccessedAt < :inactiveBefore)
+           AND (
+               (s.lastAccessedAt IS NOT NULL AND s.lastAccessedAt < :inactiveBefore)
+               OR (s.lastAccessedAt IS NULL AND s.createdAt < :inactiveBefore)
+           )
            """)
     int disableInactive(@Param("inactiveBefore") Instant inactiveBefore);
 

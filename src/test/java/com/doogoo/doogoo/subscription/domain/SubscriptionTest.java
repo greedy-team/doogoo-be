@@ -12,6 +12,6 @@ class SubscriptionTest {
     @DisplayName("token이 null이면 DoogooException")
     void constructor_throws_when_token_null() {
         assertThrows(DoogooException.class, () ->
-                new Subscription(null, SourceType.ACADEMIC, "{}", false, null));
+                new Subscription(null, SourceType.ACADEMIC, "{}", false, null, "hash"));
     }
 }

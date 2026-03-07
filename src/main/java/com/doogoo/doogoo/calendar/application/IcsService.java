@@ -1,18 +1,20 @@
 package com.doogoo.doogoo.calendar.application;
 
 import com.doogoo.doogoo.academic.api.dto.IssueAcademicIcsRequest;
-import com.doogoo.doogoo.academic.domain.AcademicNotice;
-import com.doogoo.doogoo.academic.infrastructure.AcademicNoticeRepository;
-import com.doogoo.doogoo.catalog.domain.Keyword;
+import com.doogoo.doogoo.academic.domain.AcademicSchedule;
+import com.doogoo.doogoo.academic.infrastructure.AcademicScheduleRepository;
+import com.doogoo.doogoo.lookup.domain.Keyword;
 import com.doogoo.doogoo.common.error.DoogooException;
 import com.doogoo.doogoo.common.error.ErrorCode;
 import com.doogoo.doogoo.dodream.api.dto.IssueDoDreamIcsRequest;
-import com.doogoo.doogoo.dodream.domain.DoDreamNotice;
-import com.doogoo.doogoo.dodream.infrastructure.DoDreamNoticeRepository;
+import com.doogoo.doogoo.dodream.domain.Event;
+import com.doogoo.doogoo.dodream.domain.EventStatus;
+import com.doogoo.doogoo.dodream.infrastructure.EventRepository;
 import com.doogoo.doogoo.subscription.application.SubscriptionReader;
 import com.doogoo.doogoo.subscription.domain.SourceType;
 import com.doogoo.doogoo.subscription.domain.Subscription;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -20,7 +22,6 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
@@ -43,27 +44,27 @@ public class IcsService {
     private static final String KEY_ACADEMIC = "ACADEMIC";
     private static final String KEY_DODREAM = "DODREAM";
 
-    private final AcademicNoticeRepository academicNoticeRepository;
-    private final DoDreamNoticeRepository doDreamNoticeRepository;
+    private final AcademicScheduleRepository academicScheduleRepository;
+    private final EventRepository eventRepository;
     private final SubscriptionRepository subscriptionRepository;
     private final SubscriptionReader subscriptionReader;
     private final ObjectMapper objectMapper;
     private final Cache<String, String> icsCache;
-    private final Cache<String, List<AcademicNotice>> academicNoticesCache;
-    private final Cache<String, List<DoDreamNotice>> doDreamNoticesCache;
+    private final Cache<String, List<AcademicSchedule>> academicNoticesCache;
+    private final Cache<String, List<Event>> doDreamNoticesCache;
     private final Semaphore semaphore;
 
-    public IcsService(AcademicNoticeRepository academicNoticeRepository,
-                      DoDreamNoticeRepository doDreamNoticeRepository,
+    public IcsService(AcademicScheduleRepository academicScheduleRepository,
+                      EventRepository eventRepository,
                       SubscriptionRepository subscriptionRepository,
                       SubscriptionReader subscriptionReader,
                       ObjectMapper objectMapper,
                       Cache<String, String> icsCache,
-                      Cache<String, List<AcademicNotice>> academicNoticesCache,
-                      Cache<String, List<DoDreamNotice>> doDreamNoticesCache,
+                      Cache<String, List<AcademicSchedule>> academicNoticesCache,
+                      Cache<String, List<Event>> doDreamNoticesCache,
                       Semaphore semaphore) {
-        this.academicNoticeRepository = academicNoticeRepository;
-        this.doDreamNoticeRepository = doDreamNoticeRepository;
+        this.academicScheduleRepository = academicScheduleRepository;
+        this.eventRepository = eventRepository;
         this.subscriptionRepository = subscriptionRepository;
         this.subscriptionReader = subscriptionReader;
         this.objectMapper = objectMapper;
@@ -122,38 +123,38 @@ public class IcsService {
         sb.append("METHOD:PUBLISH\r\n");
 
         if (subscription.getSourceType() == SourceType.ACADEMIC) {
-            List<AcademicNotice> all = getAcademicNotices();
+            List<AcademicSchedule> all = getAcademicSchedules();
             IssueAcademicIcsRequest filter = parsePayload(subscription.getPayload(), IssueAcademicIcsRequest.class);
-            List<AcademicNotice> filtered = all.stream().filter(n -> passesAcademicFilter(n, filter)).toList();
+            List<AcademicSchedule> filtered = all.stream().filter(n -> passesAcademicFilter(n, filter)).toList();
             if (filtered.isEmpty()) {
                 filtered = all;
             }
-            for (AcademicNotice n : filtered) {
+            for (AcademicSchedule n : filtered) {
                 appendAcademicEvent(sb, subscription, n, now);
             }
         } else if (subscription.getSourceType() == SourceType.DODREAM) {
-            List<DoDreamNotice> all = getDoDreamNotices();
+            List<Event> all = getDoDreamEvents();
             IssueDoDreamIcsRequest filter = parsePayload(subscription.getPayload(), IssueDoDreamIcsRequest.class);
-            List<DoDreamNotice> filtered = all.stream().filter(n -> passesDoDreamFilter(n, filter)).toList();
+            List<Event> filtered = all.stream().filter(n -> passesDoDreamFilter(n, filter)).toList();
             if (filtered.isEmpty()) {
                 filtered = all;
             }
-            for (DoDreamNotice n : filtered) {
+            for (Event n : filtered) {
                 appendDoDreamEvent(sb, subscription, n, now);
             }
         }
 
         sb.append("END:VCALENDAR\r\n");
-        return sb.toString();
+        return fold(sb.toString());
     }
 
 
-    private List<AcademicNotice> getAcademicNotices() {
-        return academicNoticesCache.get(KEY_ACADEMIC, k -> academicNoticeRepository.findAll());
+    private List<AcademicSchedule> getAcademicSchedules() {
+        return academicNoticesCache.get(KEY_ACADEMIC, k -> academicScheduleRepository.findAll());
     }
 
-    private List<DoDreamNotice> getDoDreamNotices() {
-        return doDreamNoticesCache.get(KEY_DODREAM, k -> doDreamNoticeRepository.findAll());
+    private List<Event> getDoDreamEvents() {
+        return doDreamNoticesCache.get(KEY_DODREAM, k -> eventRepository.findByStatus(EventStatus.OPEN));
     }
 
     private <T> T parsePayload(String payload, Class<T> type) {
@@ -165,17 +166,16 @@ public class IcsService {
         }
     }
 
-    private boolean passesAcademicFilter(AcademicNotice notice, IssueAcademicIcsRequest filter) {
-        if (filter == null) return true;
-        if (filter.selectedGradeId() != null && !notice.getGrade().id().equals(String.valueOf(filter.selectedGradeId()))) {
-            return false;
-        }
-        return true;
+    private boolean passesAcademicFilter(AcademicSchedule schedule, IssueAcademicIcsRequest filter) {
+        if (filter == null || filter.selectedGradeId() == null) return true;
+        String gradeId = schedule.getGradeId();
+        if (gradeId == null) return true; // 전체 학년 일정은 항상 포함
+        return gradeId.equals(String.valueOf(filter.selectedGradeId()));
     }
 
-    private boolean passesDoDreamFilter(DoDreamNotice notice, IssueDoDreamIcsRequest filter) {
+    private boolean passesDoDreamFilter(Event event, IssueDoDreamIcsRequest filter) {
         if (filter == null) return true;
-        String deptId = notice.getDepartmentId() != null ? notice.getDepartmentId() : notice.getDepartmentName();
+        String deptId = event.getDepartmentId();
         if ("all".equals(deptId)) return true;
         if (deptId != null && filter.selectedDepartmentId() != null && !deptId.equals(filter.selectedDepartmentId())) {
             return false;
@@ -184,25 +184,22 @@ public class IcsService {
             if (deptId == null) return true;
             if (!deptId.equals(filter.selectedMinorDepartmentId())) return false;
         }
-        List<String> keywordIds = filter.selectedKeywordId();
-        if (keywordIds != null && !keywordIds.isEmpty()) {
-            Set<Keyword> noticeKeywords = notice.getKeywords();
-            if (noticeKeywords == null || noticeKeywords.isEmpty()) return false;
-            boolean match = noticeKeywords.stream().anyMatch(k -> keywordIds.contains(k.id()));
+        List<String> selectedKeywordIds = filter.selectedKeywordId();
+        if (selectedKeywordIds != null && !selectedKeywordIds.isEmpty()) {
+            List<String> eventKeywords = event.getKeywordIds();
+            if (eventKeywords == null || eventKeywords.isEmpty()) return false;
+            boolean match = eventKeywords.stream().anyMatch(selectedKeywordIds::contains);
             if (!match) return false;
         }
         return true;
     }
 
-    private void appendAcademicEvent(StringBuilder sb, Subscription subscription, AcademicNotice n, String now) {
-        String uid = "academic-" + n.getNoticeId() + "@doogoo";
-        LocalDateTime startAt = n.getStartAt();
-        LocalDateTime endAt = n.getEndAt();
-        if (endAt == null && startAt != null) {
-            endAt = startAt.plusHours(1);
-        }
-        String startStr = startAt != null ? ICS_SEOUL.format(startAt.atZone(SEOUL)) : now.replace("Z", "");
-        String endStr = endAt != null ? ICS_SEOUL.format(endAt.atZone(SEOUL)) : startStr;
+    private void appendAcademicEvent(StringBuilder sb, Subscription subscription, AcademicSchedule n, String now) {
+        String uid = "academic-" + n.getId() + "@doogoo";
+        LocalDateTime start = n.getStartDate().atStartOfDay();
+        LocalDateTime end = n.getEndDate().atTime(23, 59);
+        String startStr = ICS_SEOUL.format(start.atZone(SEOUL));
+        String endStr = ICS_SEOUL.format(end.atZone(SEOUL));
         int alarmMin = subscription.getAlarmMinutesBefore() != null ? subscription.getAlarmMinutesBefore() : DEFAULT_ALARM_MINUTES;
 
         sb.append("BEGIN:VEVENT\r\n");
@@ -210,7 +207,7 @@ public class IcsService {
         sb.append("DTSTAMP:").append(now).append("\r\n");
         sb.append("DTSTART;TZID=Asia/Seoul:").append(startStr).append("\r\n");
         sb.append("DTEND;TZID=Asia/Seoul:").append(endStr).append("\r\n");
-        sb.append("SUMMARY:").append(escapeIcsText("[학사] " + (n.getTitle() != null ? n.getTitle() : ""))).append("\r\n");
+        sb.append("SUMMARY:").append(escapeIcsText("[학사] " + (n.getContent() != null ? n.getContent() : ""))).append("\r\n");
         sb.append("DESCRIPTION:").append(escape("학사 공지")).append("\r\n");
         if (subscription.isAlarmEnabled()) {
             sb.append("BEGIN:VALARM\r\n");
@@ -222,18 +219,22 @@ public class IcsService {
         sb.append("END:VEVENT\r\n");
     }
 
-    private void appendDoDreamEvent(StringBuilder sb, Subscription subscription, DoDreamNotice n, String now) {
-        String uid = "doodream-" + n.getNoticeId() + "@doogoo";
-        LocalDateTime start = n.getOperatingStartAt() != null ? n.getOperatingStartAt() : n.getApplicationStartAt();
-        LocalDateTime end = n.getOperatingEndAt() != null ? n.getOperatingEndAt() : n.getApplicationEndAt();
+    private void appendDoDreamEvent(StringBuilder sb, Subscription subscription, Event event, String now) {
+        String uid = "doodream-" + event.getDodreamId() + "@doogoo";
+        LocalDateTime start = event.getOperateStart() != null ? event.getOperateStart() : event.getApplyStart();
+        LocalDateTime end = event.getOperateEnd() != null ? event.getOperateEnd() : event.getApplyEnd();
         if (end == null && start != null) end = start.plusHours(1);
         String startStr = start != null ? ICS_SEOUL.format(start.atZone(SEOUL)) : now.replace("Z", "");
         String endStr = end != null ? ICS_SEOUL.format(end.atZone(SEOUL)) : startStr;
         int alarmMin = subscription.getAlarmMinutesBefore() != null ? subscription.getAlarmMinutesBefore() : DEFAULT_ALARM_MINUTES;
+
         String desc = "두드림 공지";
-        if (n.getKeywords() != null && !n.getKeywords().isEmpty()) {
-            String first = n.getKeywords().iterator().next().displayName();
-            desc = "카테고리: " + first;
+        List<String> keywords = event.getKeywordIds();
+        if (keywords != null && !keywords.isEmpty()) {
+            try {
+                Keyword kw = Keyword.fromId(keywords.get(0));
+                desc = "카테고리: " + kw.displayName();
+            } catch (Exception ignored) {}
         }
 
         sb.append("BEGIN:VEVENT\r\n");
@@ -241,8 +242,8 @@ public class IcsService {
         sb.append("DTSTAMP:").append(now).append("\r\n");
         sb.append("DTSTART;TZID=Asia/Seoul:").append(startStr).append("\r\n");
         sb.append("DTEND;TZID=Asia/Seoul:").append(endStr).append("\r\n");
-        sb.append("SUMMARY:").append(escapeIcsText("[두드림] " + (n.getTitle() != null ? n.getTitle() : ""))).append("\r\n");
-        sb.append("URL:").append(escape(n.getDetailUrl() != null ? n.getDetailUrl() : "")).append("\r\n");
+        sb.append("SUMMARY:").append(escapeIcsText("[두드림] " + (event.getTitle() != null ? event.getTitle() : ""))).append("\r\n");
+        sb.append("URL:").append(escape(event.getDodreamUrl() != null ? event.getDodreamUrl() : "")).append("\r\n");
         sb.append("DESCRIPTION:").append(escape(desc)).append("\r\n");
         if (subscription.isAlarmEnabled()) {
             sb.append("BEGIN:VALARM\r\n");
@@ -263,5 +264,43 @@ public class IcsService {
         if (s == null) return "";
         return s.replace("\\", "\\\\").replace(";", "\\;").replace(",", "\\,").replace("\n", "\\n");
     }
-}
 
+    /** RFC 5545: 75 octet 초과 라인을 CRLF + 공백으로 접어서 반환 */
+    private static String fold(String ics) {
+        StringBuilder result = new StringBuilder();
+        int start = 0;
+        while (start < ics.length()) {
+            int end = ics.indexOf("\r\n", start);
+            if (end == -1) {
+                result.append(foldLine(ics.substring(start)));
+                break;
+            }
+            result.append(foldLine(ics.substring(start, end)));
+            start = end + 2;
+        }
+        return result.toString();
+    }
+
+    private static String foldLine(String line) {
+        byte[] bytes = line.getBytes(StandardCharsets.UTF_8);
+        if (bytes.length <= 75) {
+            return line + "\r\n";
+        }
+        StringBuilder sb = new StringBuilder();
+        int pos = 0;
+        boolean first = true;
+        while (pos < bytes.length) {
+            int limit = first ? 75 : 74; // 접힌 줄은 앞에 공백 1바이트
+            int end = Math.min(pos + limit, bytes.length);
+            // 멀티바이트 UTF-8 문자 중간에서 자르지 않도록 조정
+            while (end < bytes.length && (bytes[end] & 0xC0) == 0x80) end--;
+            if (!first) sb.append(' ');
+            sb.append(new String(bytes, pos, end - pos, StandardCharsets.UTF_8));
+            pos = end;
+            if (pos < bytes.length) sb.append("\r\n");
+            first = false;
+        }
+        sb.append("\r\n");
+        return sb.toString();
+    }
+}

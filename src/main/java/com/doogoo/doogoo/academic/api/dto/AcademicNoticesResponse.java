@@ -13,8 +13,8 @@ public record AcademicNoticesResponse(
     public record NoticeItem(
             String noticeId,
             String title,
-            String gradeId,
             LocalDateTime startAt,
-            LocalDateTime endAt
+            LocalDateTime endAt,
+            @Schema(description = "대상 학년 ID (null=전체, 1~4=해당 학년)", example = "2") String gradeId
     ) {}
 }

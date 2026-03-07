@@ -1,6 +1,6 @@
 package com.doogoo.doogoo.academic.domain;
 
-import com.doogoo.doogoo.catalog.domain.Grade;
+import com.doogoo.doogoo.lookup.domain.Grade;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
@@ -22,7 +22,6 @@ public class AcademicNotice {
     private String title;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
     private Grade grade;
 
     @Column(nullable = false)

@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -21,6 +22,11 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleIllegalArgument(IllegalArgumentException e) {
         ErrorResponse body = ErrorResponse.from(ErrorCode.INVALID_TOKEN_FORMAT);
         return ResponseEntity.status(ErrorCode.INVALID_TOKEN_FORMAT.getStatus()).body(body);
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<Void> handleNoResource(NoResourceFoundException e) {
+        return ResponseEntity.notFound().build();
     }
 
     @ExceptionHandler(Exception.class)
