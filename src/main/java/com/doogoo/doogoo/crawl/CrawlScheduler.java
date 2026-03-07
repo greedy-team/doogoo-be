@@ -55,7 +55,7 @@ public class CrawlScheduler {
         this.academicSyncService = academicSyncService;
     }
 
-    @Scheduled(cron = "0 0 */6 * * *")
+    @Scheduled(cron = "0 0 */6 * * *", zone = "Asia/Seoul")
     public void regularCrawl() {
         log.info("=== 정기 크롤링 시작 ===");
         int newCount = 0;
@@ -108,7 +108,7 @@ public class CrawlScheduler {
         log.info("=== 정기 크롤링 완료: 신규={}, 업데이트={}, 마감={} ===", newCount, updateCount, closedCount);
     }
 
-    @Scheduled(cron = "0 0 3 * * *")
+    @Scheduled(cron = "0 0 3 * * *", zone = "Asia/Seoul")
     public void fullSync() {
         log.info("=== 전체 동기화 시작 ===");
         int syncCount = 0;
@@ -140,7 +140,7 @@ public class CrawlScheduler {
         log.info("=== 전체 동기화 완료: {}건 처리, {}건 AI 재분류 생략 ===", syncCount, skipCount);
     }
 
-    @Scheduled(cron = "0 0 2 1 1 *")
+    @Scheduled(cron = "0 0 2 1 1 *", zone = "Asia/Seoul")
     public void crawlAcademicSchedule() {
         int year = LocalDate.now().getYear();
         crawlAcademicScheduleForYear(year);
@@ -159,7 +159,7 @@ public class CrawlScheduler {
         }
     }
 
-    @Scheduled(cron = "0 0 4 * * *")
+    @Scheduled(cron = "0 0 4 * * *", zone = "Asia/Seoul")
     public void cleanExpiredEvents() {
         log.info("=== 만료 공지 정리 시작 ===");
         try {
