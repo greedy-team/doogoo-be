@@ -76,7 +76,7 @@ public class AiClassifier {
             return parseResponse(responseBody);
         } catch (Exception e) {
             JsonLog.warn(AiClassifier.class, new LogDto.ErrorLog(
-                    "ai.request.fail",
+                    "ai.classify.request.fail",
                     "openai-api",
                     ErrorCode.AI_CLASSIFICATION_FAILED.getStatus().value(),
                     ErrorCode.AI_CLASSIFICATION_FAILED.getCode(),
@@ -95,7 +95,7 @@ public class AiClassifier {
             return raw.toAiClassifyResult();
         } catch (Exception e) {
             JsonLog.warn(AiClassifier.class, new LogDto.ErrorLog(
-                    "ai.response.parse.fail",
+                    "ai.classify.parse.fail",
                     "openai-response",
                     ErrorCode.AI_CLASSIFICATION_FAILED.getStatus().value(),
                     ErrorCode.AI_CLASSIFICATION_FAILED.getCode(),
