@@ -81,7 +81,7 @@ public class GlobalExceptionHandler {
             return ec.getStatus().is4xxClientError() ? "api.request.warn" : "api.request.error";
         }
 
-        return ec.getStatus().is4xxClientError() ? "request.warn" : "request.error";
+        return ec.getStatus().is4xxClientError() ? "http.request.warn" : "http.request.error";
     }
 }
 

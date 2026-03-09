@@ -57,7 +57,7 @@ public class CrawlScheduler {
     public void regularCrawl() {
         long start = System.currentTimeMillis();
         JsonLog.info(CrawlScheduler.class, new LogDto.CrawlStartLog(
-                "crawl.start",
+                "dodream.crawl.start",
                 "dodream",
                 config.getRegularPages(),
                 config.getActiveStatuses().size()
@@ -73,7 +73,7 @@ public class CrawlScheduler {
 
             for (String status : config.getActiveStatuses()) {
                 JsonLog.debug(CrawlScheduler.class, new LogDto.CrawlStatusLog(
-                        "crawl.status.start",
+                        "dodream.crawl.status.start",
                         "dodream",
                         status,
                         null
@@ -99,7 +99,7 @@ public class CrawlScheduler {
 
 
             JsonLog.info(CrawlScheduler.class, new LogDto.CrawlDiscoveredLog(
-                    "crawl.discovered",
+                    "dodream.crawl.discovered",
                     "dodream",
                     uniqueCount
             ));
@@ -117,7 +117,7 @@ public class CrawlScheduler {
                     }
                 } catch (Exception e) {
                     JsonLog.warn(CrawlScheduler.class, new LogDto.ErrorLog(
-                            "crawl.item.fail",
+                            "dodream.crawl.item.fail",
                             "dodream:" + dto.dodreamId(),
                             ErrorCode.CRAWL_FAILED.getStatus().value(),
                             ErrorCode.CRAWL_FAILED.getCode(),
@@ -128,7 +128,7 @@ public class CrawlScheduler {
             long latency = System.currentTimeMillis() - start;
 
             JsonLog.info(CrawlScheduler.class, new LogDto.RegularCrawlSummaryLog(
-                    "crawl.complete",
+                    "dodream.crawl.complete",
                     "dodream",
                     newCount,
                     updateCount,
@@ -138,7 +138,7 @@ public class CrawlScheduler {
             ));
         } catch (Exception e) {
             JsonLog.error(CrawlScheduler.class, new LogDto.ErrorLog(
-                    "crawl.task.fail",
+                    "dodream.crawl.fail",
                     "task:dodream-regular",
                     ErrorCode.CRAWL_FAILED.getStatus().value(),
                     ErrorCode.CRAWL_FAILED.getCode(),
@@ -154,7 +154,7 @@ public class CrawlScheduler {
         long start = System.currentTimeMillis();
 
         JsonLog.info(CrawlScheduler.class, new LogDto.CrawlStartLog(
-                "crawl.start",
+                "dodream.crawl.start",
                 "dodream-full-sync",
                 null,
                 null
@@ -179,7 +179,7 @@ public class CrawlScheduler {
                     if (!descriptionChanged) skipCount++;
                 } catch (Exception e) {
                     JsonLog.warn(CrawlScheduler.class, new LogDto.ErrorLog(
-                            "crawl.item.fail",
+                            "dodream.crawl.item.fail",
                             "dodream:" + event.getDodreamId(),
                             ErrorCode.CRAWL_FAILED.getStatus().value(),
                             ErrorCode.CRAWL_FAILED.getCode(),
@@ -190,7 +190,7 @@ public class CrawlScheduler {
             long latency = System.currentTimeMillis() - start;
 
             JsonLog.info(CrawlScheduler.class, new LogDto.FullSyncSummaryLog(
-                    "crawl.complete",
+                    "dodream.crawl.complete",
                     "dodream-full-sync",
                     syncCount,
                     skipCount,
@@ -199,7 +199,7 @@ public class CrawlScheduler {
             ));
         } catch (Exception e) {
             JsonLog.error(CrawlScheduler.class, new LogDto.ErrorLog(
-                    "crawl.task.fail",
+                    "dodream.crawl.fail",
                     "task:dodream-full-sync",
                     ErrorCode.CRAWL_FAILED.getStatus().value(),
                     ErrorCode.CRAWL_FAILED.getCode(),
@@ -218,7 +218,7 @@ public class CrawlScheduler {
             crawlAcademicScheduleForYear(year - 1);
         } catch (Exception e) {
             JsonLog.error(CrawlScheduler.class, new LogDto.ErrorLog(
-                    "crawl.task.fail",
+                    "academic.crawl.fail",
                     "task:academic-job",
                     ErrorCode.ACADEMIC_CRAWL_FAILED.getStatus().value(),
                     ErrorCode.ACADEMIC_CRAWL_FAILED.getCode(),
@@ -232,7 +232,7 @@ public class CrawlScheduler {
         long start = System.currentTimeMillis();
 
         JsonLog.info(CrawlScheduler.class, new LogDto.CrawlStartLog(
-                "crawl.start",
+                "academic.rawl.start",
                 "academic:" + year,
                 null,
                 null
@@ -246,13 +246,13 @@ public class CrawlScheduler {
             long latency = System.currentTimeMillis() - start;
 
             JsonLog.info(CrawlScheduler.class, new LogDto.CrawlDiscoveredLog(
-                    "crawl.discovered",
+                    "academic.crawl.discovered",
                     "academic:" + year,
                     dtos.size()
             ));
 
             JsonLog.info(CrawlScheduler.class, new LogDto.AcademicCrawlSummaryLog(
-                    "crawl.complete",
+                    "academic.crawl.complete",
                     "academic",
                     year,
                     dtos.size(),
@@ -261,7 +261,7 @@ public class CrawlScheduler {
 
         } catch (Exception e) {
             JsonLog.error(CrawlScheduler.class, new LogDto.ErrorLog(
-                    "crawl.task.fail",
+                    "academic.crawl.fail",
                     "academic:" + year,
                     ErrorCode.ACADEMIC_CRAWL_FAILED.getStatus().value(),
                     ErrorCode.ACADEMIC_CRAWL_FAILED.getCode(),
@@ -275,7 +275,7 @@ public class CrawlScheduler {
         long start = System.currentTimeMillis();
 
         JsonLog.info(CrawlScheduler.class, new LogDto.CrawlStartLog(
-                "cleanup.start",
+                "event.cleanup.start",
                 "expired-events",
                 null,
                 null
@@ -285,14 +285,14 @@ public class CrawlScheduler {
             long latency = System.currentTimeMillis() - start;
 
             JsonLog.info(CrawlScheduler.class, new LogDto.CleanupSummaryLog(
-                    "cleanup.complete",
+                    "event.cleanup.complete",
                     "expired-events",
                     closedCount,
                     latency
             ));
         } catch (Exception e) {
             JsonLog.error(CrawlScheduler.class, new LogDto.ErrorLog(
-                    "cleanup.fail",
+                    "event.cleanup.fail",
                     "task:cleanup-expired",
                     ErrorCode.CRAWL_FAILED.getStatus().value(),
                     ErrorCode.CRAWL_FAILED.getCode(),

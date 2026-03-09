@@ -89,7 +89,7 @@ public class IcsService {
         );
         long latency = System.currentTimeMillis() - start;
         JsonLog.debug(IcsService.class, new LogDto.IcsCache(
-                "token.cache.result",
+                "token.cache.complete",
                 token,
                 sub.getFilterHash(),
                 !isMiss[0],
@@ -114,7 +114,7 @@ public class IcsService {
         long latency = System.currentTimeMillis() - start;
 
         JsonLog.debug(IcsService.class, new LogDto.IcsCache(
-                "ics.cache.result",
+                "ics.cache.complete",
                 token,
                 sub.getFilterHash(),
                 !isMiss[0],
@@ -132,7 +132,7 @@ public class IcsService {
         int removed = invalidateIcsCacheBySourceType(KEY_ACADEMIC);
 
         JsonLog.info(IcsService.class, new LogDto.CacheInvalidateLog(
-                "cache.invalidate",
+                "academic.cache.invalidate",
                 KEY_ACADEMIC,
                 noticeCacheSize,
                 removed
@@ -146,7 +146,7 @@ public class IcsService {
         int removed = invalidateIcsCacheBySourceType(KEY_DODREAM);
 
         JsonLog.info(IcsService.class, new LogDto.CacheInvalidateLog(
-                "cache.invalidate",
+                "dodream.cache.invalidate",
                 KEY_DODREAM,
                 noticeCacheSize,
                 removed
@@ -180,7 +180,7 @@ public class IcsService {
 
             long latency = System.currentTimeMillis() - start;
             JsonLog.info(IcsService.class, new LogDto.IcsRenderLog(
-                    "ics.render.end",
+                    "ics.render.complete",
                     subscription.getToken(),
                     subscription.getSourceType().name(),
                     subscription.getFilterHash(),
@@ -276,7 +276,7 @@ public class IcsService {
         long latency = System.currentTimeMillis() - start;
 
         JsonLog.debug(IcsService.class, new LogDto.NoticeCache(
-                "academic.cache.result",
+                "academic.cache.complete",
                 !isMiss[0],
                 latency
         ));
@@ -296,7 +296,7 @@ public class IcsService {
         long latency = System.currentTimeMillis() - start;
 
         JsonLog.debug(IcsService.class, new LogDto.NoticeCache(
-                "dodream.cache.result",
+                "dodream.cache.complete",
                 !isMiss[0],
                 latency
         ));
