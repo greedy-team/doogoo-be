@@ -1,9 +1,9 @@
 package com.doogoo.doogoo.classify;
 
 import com.doogoo.doogoo.common.error.ErrorCode;
+import com.doogoo.doogoo.common.log.JsonLog;
+import com.doogoo.doogoo.common.log.LogDto;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
@@ -20,9 +20,6 @@ import java.util.Map;
 
 @Component
 public class AiClassifier {
-
-    private static final Logger log = LoggerFactory.getLogger(AiClassifier.class);
-
     private final RestClient restClient;
     private final ObjectMapper objectMapper;
     private final String model;
@@ -78,7 +75,13 @@ public class AiClassifier {
 
             return parseResponse(responseBody);
         } catch (Exception e) {
-            log.warn("[{}] {}: {}", ErrorCode.AI_CLASSIFICATION_FAILED.getCode(), ErrorCode.AI_CLASSIFICATION_FAILED.getMessage(), e.getMessage(), e);
+            JsonLog.warn(AiClassifier.class, new LogDto.ErrorLog(
+                    "ai.request.fail",
+                    "openai-api",
+                    ErrorCode.AI_CLASSIFICATION_FAILED.getStatus().value(),
+                    ErrorCode.AI_CLASSIFICATION_FAILED.getCode(),
+                    e.getMessage()
+            ), e);
             return AiClassifyResult.fallback();
         }
     }
@@ -91,7 +94,13 @@ public class AiClassifier {
             RawClassifyResult raw = objectMapper.readValue(content, RawClassifyResult.class);
             return raw.toAiClassifyResult();
         } catch (Exception e) {
-            log.warn("[{}] {}: {}", ErrorCode.AI_CLASSIFICATION_FAILED.getCode(), ErrorCode.AI_CLASSIFICATION_FAILED.getMessage(), e.getMessage(), e);
+            JsonLog.warn(AiClassifier.class, new LogDto.ErrorLog(
+                    "ai.response.parse.fail",
+                    "openai-response",
+                    ErrorCode.AI_CLASSIFICATION_FAILED.getStatus().value(),
+                    ErrorCode.AI_CLASSIFICATION_FAILED.getCode(),
+                    e.getMessage()
+            ), e);
             return AiClassifyResult.fallback();
         }
     }

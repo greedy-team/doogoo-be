@@ -4,6 +4,8 @@ import com.doogoo.doogoo.academic.api.dto.AcademicNoticesResponse;
 import com.doogoo.doogoo.academic.api.dto.IssueAcademicIcsRequest;
 import com.doogoo.doogoo.academic.application.AcademicNoticeQueryService;
 import com.doogoo.doogoo.common.error.ErrorResponse;
+import com.doogoo.doogoo.common.log.JsonLog;
+import com.doogoo.doogoo.common.log.LogDto;
 import com.doogoo.doogoo.dodream.api.dto.IssueIcsResponse;
 import com.doogoo.doogoo.subscription.application.SubscriptionIssueService;
 import com.doogoo.doogoo.subscription.domain.SourceType;
@@ -54,9 +56,16 @@ public class AcademicController {
                 false,
                 null
         );
+        JsonLog.info(AcademicController.class, new LogDto.IcsIssueLog(
+                "ics.issue.success",
+                SourceType.ACADEMIC.name(),
+                subscription.getToken()
+        ));
+
         String baseUrl = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
         String icsUrl = baseUrl + "/cal/" + subscription.getToken() + ".ics";
         String downloadUrl = icsUrl + "?download=true";
+
         return new IssueIcsResponse(subscription.getToken(), icsUrl, downloadUrl);
     }
 }
