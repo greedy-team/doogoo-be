@@ -77,6 +77,56 @@ class DodreamParserTest {
         System.out.println("✅ 장소: " + detailedEvent.location());
         System.out.println("✅ 운영시작 갱신: " + detailedEvent.operateStart());
         System.out.println("✅ 운영종료 갱신: " + detailedEvent.operateEnd());
+        System.out.println("✅ 마일리지: " + detailedEvent.mileage());
+    }
+
+    @Test
+    @DisplayName("상세 페이지에 마일리지가 있으면 단일값으로 파싱되어야 한다")
+    void parseDetail_mileage_단일값() throws Exception {
+        File htmlFile = new ClassPathResource("dodream.detail.html").getFile();
+        Document doc = Jsoup.parse(htmlFile, StandardCharsets.UTF_8.name());
+
+        EventDto dummyListData = EventDto.builder()
+                .dodreamId(12345L)
+                .title("테스트 상세 공지")
+                .build();
+
+        EventDto detailedEvent = dodreamParser.parseDetail(doc, dummyListData);
+
+        assertThat(detailedEvent.mileage()).isNotNull();
+        assertThat(detailedEvent.mileage()).isEqualTo("100");
+    }
+
+    @Test
+    @DisplayName("마일리지가 여러 값이면 최솟값~최댓값 범위 형식으로 파싱되어야 한다")
+    void parseDetail_mileage_범위값() throws Exception {
+        File htmlFile = new ClassPathResource("dodream.detail.range-mileage.html").getFile();
+        Document doc = Jsoup.parse(htmlFile, StandardCharsets.UTF_8.name());
+
+        EventDto dummyListData = EventDto.builder()
+                .dodreamId(12345L)
+                .title("테스트 공지")
+                .build();
+
+        EventDto detailedEvent = dodreamParser.parseDetail(doc, dummyListData);
+
+        assertThat(detailedEvent.mileage()).isEqualTo("100~300");
+    }
+
+    @Test
+    @DisplayName("목록 페이지처럼 마일리지 태그가 없으면 null을 반환해야 한다")
+    void parseDetail_mileage_없으면_null() throws Exception {
+        File htmlFile = new ClassPathResource("dodream.main.html").getFile();
+        Document doc = Jsoup.parse(htmlFile, StandardCharsets.UTF_8.name());
+
+        EventDto dummyListData = EventDto.builder()
+                .dodreamId(12345L)
+                .title("테스트 공지")
+                .build();
+
+        EventDto detailedEvent = dodreamParser.parseDetail(doc, dummyListData);
+
+        assertThat(detailedEvent.mileage()).isNull();
     }
 
     @Test

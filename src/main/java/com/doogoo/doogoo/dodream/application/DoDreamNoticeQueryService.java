@@ -36,6 +36,7 @@ public class DoDreamNoticeQueryService {
                 event.getOperateEnd(),
                 event.getLocation(),
                 event.getDescription(),
+                event.getMileage(),
                 event.getKeywordIds(),
                 event.getDodreamUrl()
         );
