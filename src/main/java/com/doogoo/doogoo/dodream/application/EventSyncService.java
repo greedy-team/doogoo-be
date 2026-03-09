@@ -36,7 +36,7 @@ public class EventSyncService {
                 dto.dodreamId(), dto.title(), dto.department(),
                 dto.applyStart(), dto.applyEnd(),
                 dto.operateStart(), dto.operateEnd(),
-                dto.description(), dto.location(), dto.dodreamUrl()
+                dto.description(), dto.location(), dto.mileage(), dto.dodreamUrl()
         );
         String departmentId = resolveDepartmentId(dto.department());
         if (aiResult != null) {
@@ -67,7 +67,7 @@ public class EventSyncService {
     @Transactional
     public void enrichWithDetail(EventDto detailDto, AiClassifyResult aiResult) {
         eventRepository.findByDodreamId(detailDto.dodreamId()).ifPresent(event -> {
-            event.updateDetail(detailDto.description(), detailDto.location(), detailDto.operateStart(), detailDto.operateEnd());
+            event.updateDetail(detailDto.description(), detailDto.location(), detailDto.mileage(), detailDto.operateStart(), detailDto.operateEnd());
             if (aiResult != null) {
                 event.applyAiResult(aiResult.keywords(), event.getDepartmentId());
             }

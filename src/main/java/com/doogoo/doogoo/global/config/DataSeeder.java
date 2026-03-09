@@ -42,7 +42,6 @@ public class DataSeeder implements ApplicationRunner {
     private void seedAcademicSchedules() {
         LocalDate base = LocalDate.now();
         int year = base.getYear();
-        // 수강신청: 오늘~+4일(영업일 기준 5일), 4→3→2→1→전체 순 배정됨
         academicScheduleRepository.save(AcademicSchedule.create(
                 year, base.plusDays(1), base.plusDays(1), "수강신청", "4"));
         academicScheduleRepository.save(AcademicSchedule.create(
@@ -74,6 +73,7 @@ public class DataSeeder implements ApplicationRunner {
                 base.plusDays(11).withHour(17).withMinute(0).withSecond(0).withNano(0),
                 "AI 해커톤...",
                 "대양AI센터 B101호",
+                null,
                 "https://do.sejong.ac.kr/ko/program/all/view/1"
         );
         event1.applyAiResult(List.of("k_1"), "dept-cse");
@@ -87,6 +87,7 @@ public class DataSeeder implements ApplicationRunner {
                 base.plusDays(9).withHour(18).withMinute(0).withSecond(0).withNano(0),
                 base.plusDays(3).withHour(14).withMinute(0).withSecond(0).withNano(0),
                 base.plusDays(3).withHour(16).withMinute(0).withSecond(0).withNano(0),
+                null,
                 null,
                 null,
                 "https://do.sejong.ac.kr/ko/program/all/view/2"

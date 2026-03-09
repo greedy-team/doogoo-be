@@ -36,7 +36,7 @@ class AcademicParserTest {
             for (int i = 0; i < Math.min(5, schedules.size()); i++) {
                 AcademicScheduleDto schedule = schedules.get(i);
                 System.out.println("--- [ 일정 " + (i + 1) + " ] ---");
-                System.out.println("부서/구분: " + schedule.department());
+                System.out.println("부서/구분: " + schedule.gradeId());
                 System.out.println("기간: " + schedule.startDate() + " ~ " + schedule.endDate());
                 System.out.println("내용: " + schedule.content());
             }
