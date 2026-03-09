@@ -29,10 +29,8 @@ public class AcademicCrawler {
     }
 
     public Document fetchCalendar(int year) {
-        log.info("세종대 포털 SSO 로그인 시도");
         Map<String, String> cookies = login();
 
-        log.info("학사일정 페이지 요청: year={}", year);
         try {
             return Jsoup.connect(config.getCalendarUrl())
                     .userAgent(USER_AGENT)
@@ -75,7 +73,6 @@ public class AcademicCrawler {
                     .execute();
             cookies.putAll(step2.cookies());
             if (!cookies.containsKey("ssotoken")) {
-                log.error("[{}] {}: ssotoken 쿠키 없음, loginUrl={}", ErrorCode.ACADEMIC_LOGIN_FAILED.getCode(), ErrorCode.ACADEMIC_LOGIN_FAILED.getMessage(), config.getLoginUrl());
                 throw new DoogooException(ErrorCode.ACADEMIC_LOGIN_FAILED);
             }
 
@@ -89,15 +86,11 @@ public class AcademicCrawler {
             cookies.putAll(step3.cookies());
 
             if (!cookies.containsKey("PO_JSESSIONID")) {
-                log.error("[{}] {}: PO_JSESSIONID 쿠키 없음", ErrorCode.ACADEMIC_LOGIN_FAILED.getCode(), ErrorCode.ACADEMIC_LOGIN_FAILED.getMessage());
                 throw new DoogooException(ErrorCode.ACADEMIC_LOGIN_FAILED);
             }
-
-            log.info("[로그인] 성공 - 쿠키: {}", cookies.keySet());
             return cookies;
 
         } catch (IOException e) {
-            log.error("[{}] {}: {}", ErrorCode.ACADEMIC_CRAWL_FAILED.getCode(), ErrorCode.ACADEMIC_CRAWL_FAILED.getMessage(), e.getMessage(), e);
             throw new DoogooException(ErrorCode.ACADEMIC_CRAWL_FAILED, e);
         }
     }

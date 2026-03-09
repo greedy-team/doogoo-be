@@ -3,6 +3,8 @@ package com.doogoo.doogoo.calendar.application;
 import com.doogoo.doogoo.academic.api.dto.IssueAcademicIcsRequest;
 import com.doogoo.doogoo.academic.domain.AcademicSchedule;
 import com.doogoo.doogoo.academic.infrastructure.AcademicScheduleRepository;
+import com.doogoo.doogoo.common.log.JsonLog;
+import com.doogoo.doogoo.common.log.LogDto;
 import com.doogoo.doogoo.lookup.domain.Keyword;
 import com.doogoo.doogoo.common.error.DoogooException;
 import com.doogoo.doogoo.common.error.ErrorCode;
@@ -22,7 +24,6 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.concurrent.Semaphore;
-import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 import com.doogoo.doogoo.subscription.infrastructure.SubscriptionRepository;
@@ -77,56 +78,139 @@ public class IcsService {
     }
 
     public Subscription getSubscriptionByToken(String token) {
-        return tokenCache.get(token, k -> {
-                    Subscription sub = subscriptionReader.getByToken(k);
+        long start = System.currentTimeMillis();
+        boolean[] isMiss = {false};
+        Subscription sub = tokenCache.get(token, k -> {
+                    isMiss[0] = true;
+                    Subscription s = subscriptionReader.getByToken(k);
                     touch(k);
-                    return sub;
+                    return s;
                 }
         );
+        long latency = System.currentTimeMillis() - start;
+        JsonLog.debug(IcsService.class, new LogDto.IcsCache(
+                "token.cache.result",
+                token,
+                sub.getFilterHash(),
+                !isMiss[0],
+                latency
+        ));
+
+        return sub;
     }
 
     public String getIcsByToken(String token) {
         Subscription sub = getSubscriptionByToken(token);
         String key = sub.getSourceType().name() + ":" + sub.getFilterHash();
-        return icsCache.get(key, k -> renderWithLimit(sub));
+
+        long start = System.currentTimeMillis();
+        boolean[] isMiss = {false};
+
+        String ics = icsCache.get(key, k -> {
+            isMiss[0] = true;
+            return renderWithLimit(sub);
+        });
+
+        long latency = System.currentTimeMillis() - start;
+
+        JsonLog.debug(IcsService.class, new LogDto.IcsCache(
+                "ics.cache.result",
+                token,
+                sub.getFilterHash(),
+                !isMiss[0],
+                latency
+        ));
+
+        return ics;
     }
 
     public void invalidateAcademicDataByUpdate() {
+        int noticeCacheSize = academicNoticesCache.asMap().size();
+
         academicNoticesCache.invalidateAll();
-        invalidateIcsCacheBySourceType(KEY_ACADEMIC);
+
+        int removed = invalidateIcsCacheBySourceType(KEY_ACADEMIC);
+
+        JsonLog.info(IcsService.class, new LogDto.CacheInvalidateLog(
+                "cache.invalidate",
+                KEY_ACADEMIC,
+                noticeCacheSize,
+                removed
+        ));
     }
 
     public void invalidateDoDreamDataByUpdate() {
+        int noticeCacheSize = doDreamNoticesCache.asMap().size();
         doDreamNoticesCache.invalidateAll();
-        invalidateIcsCacheBySourceType(KEY_DODREAM);
+
+        int removed = invalidateIcsCacheBySourceType(KEY_DODREAM);
+
+        JsonLog.info(IcsService.class, new LogDto.CacheInvalidateLog(
+                "cache.invalidate",
+                KEY_DODREAM,
+                noticeCacheSize,
+                removed
+        ));
+    }
+
+    private int invalidateIcsCacheBySourceType(String type) {
+        int before = icsCache.asMap().size();
+        icsCache.asMap().keySet().removeIf(key -> key.startsWith(type + ":"));
+        int after = icsCache.asMap().size();
+        return before - after;
     }
 
     private String renderWithLimit(Subscription subscription) {
         boolean acquired = false;
+        long start = System.currentTimeMillis();
+
+        JsonLog.info(IcsService.class, new LogDto.IcsRenderLog(
+                "ics.render.start",
+                subscription.getToken(),
+                subscription.getSourceType().name(),
+                subscription.getFilterHash(),
+                null,
+                null
+        ));
+
         try {
             semaphore.acquire();
             acquired = true;
-            return render(subscription);
+            RenderResult rendered = render(subscription);
+
+            long latency = System.currentTimeMillis() - start;
+            JsonLog.info(IcsService.class, new LogDto.IcsRenderLog(
+                    "ics.render.end",
+                    subscription.getToken(),
+                    subscription.getSourceType().name(),
+                    subscription.getFilterHash(),
+                    rendered.eventCount(),
+                    latency
+            ));
+
+            return rendered.ics();
+
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            throw new RuntimeException(e);
+            throw new DoogooException(ErrorCode.INTERNAL_SERVER_ERROR, e);
+
         } finally {
             if (acquired) semaphore.release();
         }
     }
+
 
     private void touch(String token) {
         subscriptionRepository.updateLastAccessedAtByToken(token, Instant.now());
     }
 
 
-    private void invalidateIcsCacheBySourceType(String type) {
-        icsCache.asMap().keySet().removeIf(key -> key.startsWith(type + ":"));
-    }
-
-    private String render(Subscription subscription) {
+    private RenderResult render(Subscription subscription) {
         String now = ICS_UTC.format(Instant.now());
         StringBuilder sb = new StringBuilder();
+
+        int eventCount = 0;
+
         sb.append("BEGIN:VCALENDAR\r\n");
         sb.append("VERSION:2.0\r\n");
         sb.append("PRODID:-//Doogoo//Calendar 1.0//KO\r\n");
@@ -135,44 +219,103 @@ public class IcsService {
 
         if (subscription.getSourceType() == SourceType.ACADEMIC) {
             List<AcademicSchedule> all = getAcademicSchedules();
-            IssueAcademicIcsRequest filter = parsePayload(subscription.getPayload(), IssueAcademicIcsRequest.class);
+            IssueAcademicIcsRequest filter = parsePayload(
+                    subscription.getPayload(),
+                    IssueAcademicIcsRequest.class,
+                    subscription.getToken(),
+                    subscription.getSourceType().name()
+            );
             List<AcademicSchedule> filtered = all.stream().filter(n -> passesAcademicFilter(n, filter)).toList();
             if (filtered.isEmpty()) {
                 filtered = all;
             }
+            eventCount = filtered.size();
+
             for (AcademicSchedule n : filtered) {
                 appendAcademicEvent(sb, subscription, n, now);
             }
         } else if (subscription.getSourceType() == SourceType.DODREAM) {
             List<Event> all = getDoDreamEvents();
-            IssueDoDreamIcsRequest filter = parsePayload(subscription.getPayload(), IssueDoDreamIcsRequest.class);
+            IssueDoDreamIcsRequest filter = parsePayload(
+                    subscription.getPayload(),
+                    IssueDoDreamIcsRequest.class,
+                    subscription.getToken(),
+                    subscription.getSourceType().name()
+            );
             List<Event> filtered = all.stream().filter(n -> passesDoDreamFilter(n, filter)).toList();
             if (filtered.isEmpty()) {
                 filtered = all;
             }
+            eventCount = filtered.size();
+
             for (Event n : filtered) {
                 appendDoDreamEvent(sb, subscription, n, now);
             }
         }
 
         sb.append("END:VCALENDAR\r\n");
-        return fold(sb.toString());
+        return new RenderResult(fold(sb.toString()), eventCount);
     }
 
+    private record RenderResult(
+            String ics,
+            int eventCount
+    ) {
+    }
 
     private List<AcademicSchedule> getAcademicSchedules() {
-        return academicNoticesCache.get(KEY_ACADEMIC, k -> academicScheduleRepository.findAll());
+        long start = System.currentTimeMillis();
+        boolean[] isMiss = {false};
+
+        List<AcademicSchedule> schedules = academicNoticesCache.get(KEY_ACADEMIC, k -> {
+                    isMiss[0] = true;
+                    return academicScheduleRepository.findAll();
+                }
+        );
+
+        long latency = System.currentTimeMillis() - start;
+
+        JsonLog.debug(IcsService.class, new LogDto.NoticeCache(
+                "academic.cache.result",
+                !isMiss[0],
+                latency
+        ));
+
+        return schedules;
     }
 
     private List<Event> getDoDreamEvents() {
-        return doDreamNoticesCache.get(KEY_DODREAM, k -> eventRepository.findByStatus(EventStatus.OPEN));
+        long start = System.currentTimeMillis();
+        boolean[] isMiss = {false};
+
+        List<Event> schedules = doDreamNoticesCache.get(KEY_DODREAM, k -> {
+                    isMiss[0] = true;
+                    return eventRepository.findByStatus(EventStatus.OPEN);
+                }
+        );
+        long latency = System.currentTimeMillis() - start;
+
+        JsonLog.debug(IcsService.class, new LogDto.NoticeCache(
+                "dodream.cache.result",
+                !isMiss[0],
+                latency
+        ));
+
+        return schedules;
     }
 
-    private <T> T parsePayload(String payload, Class<T> type) {
+    private <T> T parsePayload(String payload, Class<T> type, String token, String sourceType) {
         if (payload == null || payload.isBlank()) return null;
         try {
             return objectMapper.readValue(payload, type);
         } catch (JsonProcessingException e) {
+            JsonLog.warn(IcsService.class, new LogDto.PayloadParseWarn(
+                    "subscription.payload.parse.warn",
+                    sourceType,
+                    type.getSimpleName(),
+                    token,
+                    e.getOriginalMessage()
+            ), e);
             return null;
         }
     }
@@ -317,4 +460,5 @@ public class IcsService {
         sb.append("\r\n");
         return sb.toString();
     }
+
 }
