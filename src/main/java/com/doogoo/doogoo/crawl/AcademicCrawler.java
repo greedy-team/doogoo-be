@@ -3,6 +3,7 @@ package com.doogoo.doogoo.crawl;
 import com.doogoo.doogoo.common.error.DoogooException;
 import com.doogoo.doogoo.common.error.ErrorCode;
 import com.doogoo.doogoo.global.config.SejongPortalConfig;
+import jakarta.annotation.PostConstruct;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -10,7 +11,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
+import javax.net.ssl.SSLSocketFactory;
 import java.io.IOException;
+import java.security.Security;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -23,9 +26,25 @@ public class AcademicCrawler {
     private static final String PORTAL_BASE = "https://portal.sejong.ac.kr";
 
     private final SejongPortalConfig config;
+    private SSLSocketFactory legacyTlsFactory;
 
     public AcademicCrawler(SejongPortalConfig config) {
         this.config = config;
+    }
+
+    @PostConstruct
+    private void initLegacyTls() {
+        // Java 17 기본 비활성화된 TLSv1, TLSv1.1을 세종대 포털 연결을 위해 허용
+        String disabled = Security.getProperty("jdk.tls.disabledAlgorithms");
+        if (disabled != null) {
+            disabled = disabled.replaceAll("\\bTLSv1\\.1\\b,?\\s*", "")
+                               .replaceAll("\\bTLSv1\\b,?\\s*", "")
+                               .replaceAll(",\\s*$", "")
+                               .trim();
+            Security.setProperty("jdk.tls.disabledAlgorithms", disabled);
+            log.info("세종대 포털 연결을 위해 레거시 TLS 활성화");
+        }
+        legacyTlsFactory = new LegacyTlsSocketFactory((SSLSocketFactory) SSLSocketFactory.getDefault());
     }
 
     public Document fetchCalendar(int year) {
@@ -35,6 +54,7 @@ public class AcademicCrawler {
         log.info("학사일정 페이지 요청: year={}", year);
         try {
             return Jsoup.connect(config.getCalendarUrl())
+                    .sslSocketFactory(legacyTlsFactory)
                     .userAgent(USER_AGENT)
                     .cookies(cookies)
                     .data("yy", String.valueOf(year))
@@ -54,6 +74,7 @@ public class AcademicCrawler {
             Map<String, String> cookies = new HashMap<>();
 
             Connection.Response step1 = Jsoup.connect(config.getLoginUrl())
+                    .sslSocketFactory(legacyTlsFactory)
                     .userAgent(USER_AGENT)
                     .ignoreHttpErrors(true)
                     .method(Connection.Method.GET)
@@ -61,6 +82,7 @@ public class AcademicCrawler {
             cookies.putAll(step1.cookies());
 
             Connection.Response step2 = Jsoup.connect(PORTAL_BASE + "/jsp/login/login_action.jsp")
+                    .sslSocketFactory(legacyTlsFactory)
                     .userAgent(USER_AGENT)
                     .header("Referer", config.getLoginUrl())
                     .header("Origin", PORTAL_BASE)
@@ -80,6 +102,7 @@ public class AcademicCrawler {
             }
 
             Connection.Response step3 = Jsoup.connect(PORTAL_BASE + "/comm/member/user/ssoLoginProc.do")
+                    .sslSocketFactory(legacyTlsFactory)
                     .userAgent(USER_AGENT)
                     .cookies(cookies)
                     .ignoreHttpErrors(true)
