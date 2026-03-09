@@ -142,18 +142,16 @@ public class CrawlScheduler {
 
     @Scheduled(cron = "0 0 2 1 1 *", zone = "Asia/Seoul")
     public void crawlAcademicSchedule() {
-        int year = LocalDate.now().getYear();
-        crawlAcademicScheduleForYear(year);
-        crawlAcademicScheduleForYear(year - 1);
+        crawlAcademicScheduleForYear(LocalDate.now().getYear());
     }
 
     public void crawlAcademicScheduleForYear(int year) {
-        log.info("=== 학사일정 크롤링 시작: year={} ===", year);
+        log.info("=== 학사일정 로드 시작: year={} ===", year);
         try {
             Document doc = academicCrawler.fetchCalendar(year);
             List<AcademicScheduleDto> dtos = academicParser.parse(doc, year);
             academicSyncService.replaceByYear(year, dtos);
-            log.info("=== 학사일정 크롤링 완료: year={}, {}건 ===", year, dtos.size());
+            log.info("=== 학사일정 로드 완료: year={}, {}건 ===", year, dtos.size());
         } catch (Exception e) {
             log.error("[{}] {}: year={}", ErrorCode.ACADEMIC_CRAWL_FAILED.getCode(), ErrorCode.ACADEMIC_CRAWL_FAILED.getMessage(), year, e);
         }
