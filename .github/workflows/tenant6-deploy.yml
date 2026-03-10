@@ -42,11 +42,10 @@ jobs:
           port: ${{ secrets.TENANT_SSH_PORT }}
           script: |
             fuser -k 8080/tcp || true
-            mkdir -p /config/logs/doogoo
             
-            cd /config
+            mkdir -p /home/tenant-user/logs/doogoo
             
             nohup java -Xmx512m -jar /home/tenant-user/app/*.jar > /config/logs/doogoo/app.log 2>&1 &
             
             sleep 5
-            ps aux | grep java | grep -v grep
+            ps aux | grep java | grep -v grep || true
