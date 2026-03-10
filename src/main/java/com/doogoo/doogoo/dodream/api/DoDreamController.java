@@ -1,6 +1,8 @@
 package com.doogoo.doogoo.dodream.api;
 
 import com.doogoo.doogoo.common.error.ErrorResponse;
+import com.doogoo.doogoo.common.log.JsonLog;
+import com.doogoo.doogoo.common.log.LogDto;
 import com.doogoo.doogoo.dodream.api.dto.DoDreamNoticesResponse;
 import com.doogoo.doogoo.dodream.api.dto.IssueDoDreamIcsRequest;
 import com.doogoo.doogoo.dodream.api.dto.IssueIcsResponse;
@@ -54,6 +56,13 @@ public class DoDreamController {
                 false,
                 null
         );
+
+        JsonLog.info(DoDreamController.class, new LogDto.IcsIssueLog(
+                "ics.issue.success",
+                SourceType.DODREAM.name(),
+                subscription.getToken()
+        ));
+
         String baseUrl = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
         String icsUrl = baseUrl + "/cal/" + subscription.getToken() + ".ics";
         String downloadUrl = icsUrl + "?download=true";
