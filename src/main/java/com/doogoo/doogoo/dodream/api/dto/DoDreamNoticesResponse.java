@@ -21,6 +21,7 @@ public record DoDreamNoticesResponse(
             LocalDateTime operatingEndAt,
             String location,
             String description,
+            String mileage,
             List<String> keywordIds,
             String detailUrl
     ) {}

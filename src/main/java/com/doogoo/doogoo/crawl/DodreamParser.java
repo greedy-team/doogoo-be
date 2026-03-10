@@ -109,6 +109,9 @@ public class DodreamParser {
         // 장소 파싱 (없으면 null)
         String location = parseLocation(doc);
 
+        // 마일리지 파싱 (없으면 null)
+        String mileage = parseMileage(doc);
+
         // 운영 날짜 파싱
         LocalDateTime operateStart = listData.operateStart();
         LocalDateTime operateEnd = listData.operateEnd();
@@ -127,6 +130,7 @@ public class DodreamParser {
         return EventDto.builder(listData)
                 .description(description)
                 .location(location)
+                .mileage(mileage)
                 .operateStart(operateStart)
                 .operateEnd(operateEnd)
                 .build();
@@ -152,12 +156,28 @@ public class DodreamParser {
         return closedIds;
     }
 
-    /**
-     * 상세 페이지에서 장소 정보를 파싱합니다.
-     * 장소 필드가 없으면 null을 반환합니다.
-     */
+    private String parseMileage(Document doc) {
+        Elements mileageEls = doc.select("ul[data-role=table] li.tbody span.mileage b");
+        if (mileageEls.isEmpty()) return null;
+
+        int min = Integer.MAX_VALUE;
+        int max = Integer.MIN_VALUE;
+
+        for (Element el : mileageEls) {
+            try {
+                int value = Integer.parseInt(el.text().trim());
+                if (value < min) min = value;
+                if (value > max) max = value;
+            } catch (NumberFormatException e) {
+                log.warn("마일리지 파싱 실패: {}", el.text());
+            }
+        }
+
+        if (min == Integer.MAX_VALUE) return null;
+        return min == max ? String.valueOf(min) : min + "~" + max;
+    }
+
     private String parseLocation(Document doc) {
-        // th/dt 에서 "장소" 레이블을 찾아 인접 값 추출 시도
         Element locationLabel = doc.selectFirst("th:contains(장소), dt:contains(장소)");
         if (locationLabel != null) {
             Element valueEl = locationLabel.nextElementSibling();
