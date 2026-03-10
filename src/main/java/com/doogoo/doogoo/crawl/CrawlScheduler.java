@@ -212,53 +212,16 @@ public class CrawlScheduler {
 
     @Scheduled(cron = "0 0 2 1 1 *", zone = "Asia/Seoul")
     public void crawlAcademicSchedule() {
-        int year = LocalDate.now().getYear();
-        try {
-            crawlAcademicScheduleForYear(year);
-            crawlAcademicScheduleForYear(year - 1);
-        } catch (Exception e) {
-            JsonLog.error(CrawlScheduler.class, new LogDto.ErrorLog(
-                    "academic.crawl.fail",
-                    "task:academic-job",
-                    ErrorCode.ACADEMIC_CRAWL_FAILED.getStatus().value(),
-                    ErrorCode.ACADEMIC_CRAWL_FAILED.getCode(),
-                    e.getMessage()
-            ), e);
-        }
-
+        crawlAcademicScheduleForYear(LocalDate.now().getYear());
     }
 
     public void crawlAcademicScheduleForYear(int year) {
-        long start = System.currentTimeMillis();
-
-        JsonLog.info(CrawlScheduler.class, new LogDto.CrawlStartLog(
-                "academic.rawl.start",
-                "academic:" + year,
-                null,
-                null
-        ));
-
+        log.info("=== 학사일정 로드 시작: year={} ===", year);
         try {
             Document doc = academicCrawler.fetchCalendar(year);
             List<AcademicScheduleDto> dtos = academicParser.parse(doc, year);
             academicSyncService.replaceByYear(year, dtos);
-
-            long latency = System.currentTimeMillis() - start;
-
-            JsonLog.info(CrawlScheduler.class, new LogDto.CrawlDiscoveredLog(
-                    "academic.crawl.discovered",
-                    "academic:" + year,
-                    dtos.size()
-            ));
-
-            JsonLog.info(CrawlScheduler.class, new LogDto.AcademicCrawlSummaryLog(
-                    "academic.crawl.complete",
-                    "academic",
-                    year,
-                    dtos.size(),
-                    latency
-            ));
-
+            log.info("=== 학사일정 로드 완료: year={}, {}건 ===", year, dtos.size());
         } catch (Exception e) {
             JsonLog.error(CrawlScheduler.class, new LogDto.ErrorLog(
                     "academic.crawl.fail",

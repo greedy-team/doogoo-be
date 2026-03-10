@@ -44,6 +44,8 @@ public class Event {
     @Column(columnDefinition = "TEXT")
     private String description;
 
+    private String mileage;
+
     private String dodreamUrl;
 
     @ElementCollection(fetch = FetchType.EAGER)
@@ -74,7 +76,7 @@ public class Event {
             Long dodreamId, String title, String department,
             LocalDateTime applyStart, LocalDateTime applyEnd,
             LocalDateTime operateStart, LocalDateTime operateEnd,
-            String description, String location, String dodreamUrl
+            String description, String location, String mileage, String dodreamUrl
     ) {
         Event event = new Event();
         event.dodreamId = dodreamId;
@@ -87,6 +89,7 @@ public class Event {
         event.operateEnd = operateEnd;
         event.description = description;
         event.location = location;
+        event.mileage = mileage;
         event.dodreamUrl = dodreamUrl;
         event.status = EventStatus.OPEN;
         return event;
@@ -104,9 +107,10 @@ public class Event {
         return changed;
     }
 
-    public void updateDetail(String description, String location, LocalDateTime operateStart, LocalDateTime operateEnd) {
+    public void updateDetail(String description, String location, String mileage, LocalDateTime operateStart, LocalDateTime operateEnd) {
         this.description = description;
         if (location != null) this.location = location;
+        if (mileage != null) this.mileage = mileage;
         if (operateStart != null) this.operateStart = operateStart;
         if (operateEnd != null) this.operateEnd = operateEnd;
     }
@@ -135,6 +139,7 @@ public class Event {
                 .operateEnd(operateEnd)
                 .description(description)
                 .location(location)
+                .mileage(mileage)
                 .dodreamUrl(dodreamUrl)
                 .keywordIds(keywordIds)
                 .status(status)
@@ -152,6 +157,7 @@ public class Event {
     public LocalDateTime getOperateStart() { return operateStart; }
     public LocalDateTime getOperateEnd() { return operateEnd; }
     public String getDescription() { return description; }
+    public String getMileage() { return mileage; }
     public String getDodreamUrl() { return dodreamUrl; }
     public List<String> getKeywordIds() { return keywordIds; }
     public EventStatus getStatus() { return status; }
