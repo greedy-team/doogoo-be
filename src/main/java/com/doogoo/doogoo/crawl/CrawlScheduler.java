@@ -56,12 +56,13 @@ public class CrawlScheduler {
     @Scheduled(cron = "0 0 0 */2 * *", zone = "Asia/Seoul")
     public void regularCrawl() {
         long start = System.currentTimeMillis();
-        JsonLog.info(CrawlScheduler.class, new LogDto.CrawlStartLog(
-                "dodream.crawl.start",
-                "dodream",
-                config.getRegularPages(),
-                config.getActiveStatuses().size()
-        ));
+        JsonLog.info(
+                CrawlScheduler.class, new LogDto.CrawlStartLog(
+                        "dodream.crawl.start",
+                        "dodream",
+                        config.getRegularPages(),
+                        config.getActiveStatuses().size()
+                ));
 
         int newCount = 0;
         int updateCount = 0;
@@ -72,12 +73,13 @@ public class CrawlScheduler {
             Map<Long, EventDto> allEvents = new LinkedHashMap<>();
 
             for (String status : config.getActiveStatuses()) {
-                JsonLog.debug(CrawlScheduler.class, new LogDto.CrawlStatusLog(
-                        "dodream.crawl.status.start",
-                        "dodream",
-                        status,
-                        null
-                ));
+                JsonLog.debug(
+                        CrawlScheduler.class, new LogDto.CrawlStatusLog(
+                                "dodream.crawl.status.start",
+                                "dodream",
+                                status,
+                                null
+                        ));
 
                 for (int page = 1; page <= config.getRegularPages(); page++) {
                     Document doc = crawler.fetchListPage(page, status);
@@ -98,11 +100,12 @@ public class CrawlScheduler {
             uniqueCount = allEvents.size();
 
 
-            JsonLog.info(CrawlScheduler.class, new LogDto.CrawlDiscoveredLog(
-                    "dodream.crawl.discovered",
-                    "dodream",
-                    uniqueCount
-            ));
+            JsonLog.info(
+                    CrawlScheduler.class, new LogDto.CrawlDiscoveredLog(
+                            "dodream.crawl.discovered",
+                            "dodream",
+                            uniqueCount
+                    ));
 
             for (EventDto dto : allEvents.values()) {
                 try {
@@ -111,39 +114,45 @@ public class CrawlScheduler {
                     } else {
                         Document detailDoc = crawler.fetchDetailPage(dto.dodreamId());
                         EventDto detailed = parser.parseDetail(detailDoc, dto);
-                        AiClassifyResult aiResult = aiClassifier.classify(detailed.title(), detailed.description(), detailed.department());
+                        AiClassifyResult aiResult = aiClassifier.classify(
+                                detailed.title(),
+                                detailed.description(),
+                                detailed.department());
                         syncService.saveNew(detailed, aiResult);
                         newCount++;
                     }
                 } catch (Exception e) {
-                    JsonLog.warn(CrawlScheduler.class, new LogDto.ErrorLog(
-                            "dodream.crawl.item.fail",
-                            "dodream:" + dto.dodreamId(),
-                            ErrorCode.CRAWL_FAILED.getStatus().value(),
-                            ErrorCode.CRAWL_FAILED.getCode(),
-                            e.getMessage()
-                    ), e);
+                    JsonLog.warn(
+                            CrawlScheduler.class, new LogDto.ErrorLog(
+                                    "dodream.crawl.item.fail",
+                                    "dodream:" + dto.dodreamId(),
+                                    ErrorCode.CRAWL_FAILED.getStatus().value(),
+                                    ErrorCode.CRAWL_FAILED.getCode(),
+                                    e.getMessage()
+                            ), e);
                 }
             }
             long latency = System.currentTimeMillis() - start;
 
-            JsonLog.info(CrawlScheduler.class, new LogDto.RegularCrawlSummaryLog(
-                    "dodream.crawl.complete",
-                    "dodream",
-                    newCount,
-                    updateCount,
-                    closedCount,
-                    uniqueCount,
-                    latency
-            ));
+            JsonLog.info(
+                    CrawlScheduler.class, new LogDto.RegularCrawlSummaryLog(
+                            "dodream.crawl.complete",
+                            "dodream",
+                            newCount,
+                            updateCount,
+                            closedCount,
+                            uniqueCount,
+                            latency
+                    ));
         } catch (Exception e) {
-            JsonLog.error(CrawlScheduler.class, new LogDto.ErrorLog(
-                    "dodream.crawl.fail",
-                    "task:dodream-regular",
-                    ErrorCode.CRAWL_FAILED.getStatus().value(),
-                    ErrorCode.CRAWL_FAILED.getCode(),
-                    e.getMessage()
-            ), e);
+            JsonLog.error(
+                    CrawlScheduler.class, new LogDto.ErrorLog(
+                            "dodream.crawl.fail",
+                            "task:dodream-regular",
+                            ErrorCode.CRAWL_FAILED.getStatus().value(),
+                            ErrorCode.CRAWL_FAILED.getCode(),
+                            e.getMessage()
+                    ), e);
         }
 
 
@@ -153,12 +162,13 @@ public class CrawlScheduler {
     public void fullSync() {
         long start = System.currentTimeMillis();
 
-        JsonLog.info(CrawlScheduler.class, new LogDto.CrawlStartLog(
-                "dodream.crawl.start",
-                "dodream-full-sync",
-                null,
-                null
-        ));
+        JsonLog.info(
+                CrawlScheduler.class, new LogDto.CrawlStartLog(
+                        "dodream.crawl.start",
+                        "dodream-full-sync",
+                        null,
+                        null
+                ));
         int syncCount = 0;
         int skipCount = 0;
 
@@ -178,33 +188,36 @@ public class CrawlScheduler {
                     syncCount++;
                     if (!descriptionChanged) skipCount++;
                 } catch (Exception e) {
-                    JsonLog.warn(CrawlScheduler.class, new LogDto.ErrorLog(
-                            "dodream.crawl.item.fail",
-                            "dodream:" + event.getDodreamId(),
-                            ErrorCode.CRAWL_FAILED.getStatus().value(),
-                            ErrorCode.CRAWL_FAILED.getCode(),
-                            e.getMessage()
-                    ), e);
+                    JsonLog.warn(
+                            CrawlScheduler.class, new LogDto.ErrorLog(
+                                    "dodream.crawl.item.fail",
+                                    "dodream:" + event.getDodreamId(),
+                                    ErrorCode.CRAWL_FAILED.getStatus().value(),
+                                    ErrorCode.CRAWL_FAILED.getCode(),
+                                    e.getMessage()
+                            ), e);
                 }
             }
             long latency = System.currentTimeMillis() - start;
 
-            JsonLog.info(CrawlScheduler.class, new LogDto.FullSyncSummaryLog(
-                    "dodream.crawl.complete",
-                    "dodream-full-sync",
-                    syncCount,
-                    skipCount,
-                    openEvents.size(),
-                    latency
-            ));
+            JsonLog.info(
+                    CrawlScheduler.class, new LogDto.FullSyncSummaryLog(
+                            "dodream.crawl.complete",
+                            "dodream-full-sync",
+                            syncCount,
+                            skipCount,
+                            openEvents.size(),
+                            latency
+                    ));
         } catch (Exception e) {
-            JsonLog.error(CrawlScheduler.class, new LogDto.ErrorLog(
-                    "dodream.crawl.fail",
-                    "task:dodream-full-sync",
-                    ErrorCode.CRAWL_FAILED.getStatus().value(),
-                    ErrorCode.CRAWL_FAILED.getCode(),
-                    e.getMessage()
-            ), e);
+            JsonLog.error(
+                    CrawlScheduler.class, new LogDto.ErrorLog(
+                            "dodream.crawl.fail",
+                            "task:dodream-full-sync",
+                            ErrorCode.CRAWL_FAILED.getStatus().value(),
+                            ErrorCode.CRAWL_FAILED.getCode(),
+                            e.getMessage()
+                    ), e);
         }
 
 
@@ -216,20 +229,19 @@ public class CrawlScheduler {
     }
 
     public void crawlAcademicScheduleForYear(int year) {
-        log.info("=== 학사일정 로드 시작: year={} ===", year);
         try {
             Document doc = academicCrawler.fetchCalendar(year);
             List<AcademicScheduleDto> dtos = academicParser.parse(doc, year);
             academicSyncService.replaceByYear(year, dtos);
-            log.info("=== 학사일정 로드 완료: year={}, {}건 ===", year, dtos.size());
         } catch (Exception e) {
-            JsonLog.error(CrawlScheduler.class, new LogDto.ErrorLog(
-                    "academic.crawl.fail",
-                    "academic:" + year,
-                    ErrorCode.ACADEMIC_CRAWL_FAILED.getStatus().value(),
-                    ErrorCode.ACADEMIC_CRAWL_FAILED.getCode(),
-                    e.getMessage()
-            ), e);
+            JsonLog.error(
+                    CrawlScheduler.class, new LogDto.ErrorLog(
+                            "academic.crawl.fail",
+                            "academic:" + year,
+                            ErrorCode.ACADEMIC_CRAWL_FAILED.getStatus().value(),
+                            ErrorCode.ACADEMIC_CRAWL_FAILED.getCode(),
+                            e.getMessage()
+                    ), e);
         }
     }
 
@@ -237,30 +249,33 @@ public class CrawlScheduler {
     public void cleanExpiredEvents() {
         long start = System.currentTimeMillis();
 
-        JsonLog.info(CrawlScheduler.class, new LogDto.CrawlStartLog(
-                "event.cleanup.start",
-                "expired-events",
-                null,
-                null
-        ));
+        JsonLog.info(
+                CrawlScheduler.class, new LogDto.CrawlStartLog(
+                        "event.cleanup.start",
+                        "expired-events",
+                        null,
+                        null
+                ));
         try {
             int closedCount = syncService.closeExpiredEvents();
             long latency = System.currentTimeMillis() - start;
 
-            JsonLog.info(CrawlScheduler.class, new LogDto.CleanupSummaryLog(
-                    "event.cleanup.complete",
-                    "expired-events",
-                    closedCount,
-                    latency
-            ));
+            JsonLog.info(
+                    CrawlScheduler.class, new LogDto.CleanupSummaryLog(
+                            "event.cleanup.complete",
+                            "expired-events",
+                            closedCount,
+                            latency
+                    ));
         } catch (Exception e) {
-            JsonLog.error(CrawlScheduler.class, new LogDto.ErrorLog(
-                    "event.cleanup.fail",
-                    "task:cleanup-expired",
-                    ErrorCode.CRAWL_FAILED.getStatus().value(),
-                    ErrorCode.CRAWL_FAILED.getCode(),
-                    e.getMessage()
-            ), e);
+            JsonLog.error(
+                    CrawlScheduler.class, new LogDto.ErrorLog(
+                            "event.cleanup.fail",
+                            "task:cleanup-expired",
+                            ErrorCode.CRAWL_FAILED.getStatus().value(),
+                            ErrorCode.CRAWL_FAILED.getCode(),
+                            e.getMessage()
+                    ), e);
         }
     }
 }
