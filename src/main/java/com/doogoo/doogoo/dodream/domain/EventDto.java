@@ -13,6 +13,7 @@ public record EventDto(
         LocalDateTime operateEnd,
         String description,
         String location,
+        String mileage,
         String dodreamUrl,
         List<String> keywordIds,
         EventStatus status
@@ -33,6 +34,7 @@ public record EventDto(
                 .operateEnd(source.operateEnd)
                 .description(source.description)
                 .location(source.location)
+                .mileage(source.mileage)
                 .dodreamUrl(source.dodreamUrl)
                 .keywordIds(source.keywordIds)
                 .status(source.status);
@@ -49,6 +51,7 @@ public record EventDto(
         private String description;
         private String location;
         private String dodreamUrl;
+        private String mileage;
         private List<String> keywordIds;
         private EventStatus status;
 
@@ -63,6 +66,7 @@ public record EventDto(
         public Builder operateEnd(LocalDateTime operateEnd) { this.operateEnd = operateEnd; return this; }
         public Builder description(String description) { this.description = description; return this; }
         public Builder location(String location) { this.location = location; return this; }
+        public Builder mileage(String mileage) { this.mileage = mileage; return this; }
         public Builder dodreamUrl(String dodreamUrl) { this.dodreamUrl = dodreamUrl; return this; }
         public Builder keywordIds(List<String> keywordIds) { this.keywordIds = keywordIds; return this; }
         public Builder status(EventStatus status) { this.status = status; return this; }
@@ -71,7 +75,7 @@ public record EventDto(
             return new EventDto(
                     dodreamId, title, department,
                     applyStart, applyEnd, operateStart, operateEnd,
-                    description, location, dodreamUrl,
+                    description, location, mileage, dodreamUrl,
                     keywordIds, status
             );
         }
