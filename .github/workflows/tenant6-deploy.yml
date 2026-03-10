@@ -43,8 +43,9 @@ jobs:
           script: |
             sudo fuser -k 8080/tcp || true
             
-            cd /home/tenant-user/app
-            nohup java -Xmx512m -jar *.jar > ../app.log 2>&1 &
+            cd /config
             
-            sleep 2
+            nohup java -Xmx512m -jar /home/tenant-user/app/*.jar > /dev/null 2>&1 &
+            
+            sleep 5
             ps aux | grep java | grep -v grep
