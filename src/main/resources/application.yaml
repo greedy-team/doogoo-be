@@ -32,10 +32,3 @@ openai:
   api-key: ${OPENAI_API_KEY:dummy-key}
   model: gpt-4o-mini
   url: https://api.openai.com/v1/chat/completions
-
-sejong:
-  portal:
-    login-url: https://portal.sejong.ac.kr/jsp/login/loginSSL.jsp
-    calendar-url: https://portal.sejong.ac.kr/user/comm/calendar/ptfol/index.do
-    id: ${SEJONG_PORTAL_ID:}
-    password: ${SEJONG_PORTAL_PASSWORD:}
