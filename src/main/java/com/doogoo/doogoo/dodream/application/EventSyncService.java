@@ -46,7 +46,6 @@ public class EventSyncService {
         }
         Event saved = eventRepository.save(event);
         icsService.invalidateDoDreamDataByUpdate();
-        log.info("새 공지 저장: dodreamId={}, title={}", dto.dodreamId(), dto.title());
         return saved;
     }
 
@@ -57,7 +56,6 @@ public class EventSyncService {
                     if (event.updateFromList(dto.title(), dto.department(), dto.applyStart(), dto.applyEnd())) {
                         eventRepository.save(event);
                         icsService.invalidateDoDreamDataByUpdate();
-                        log.info("공지 업데이트: dodreamId={}", dto.dodreamId());
                     }
                     return true;
                 })
@@ -73,7 +71,6 @@ public class EventSyncService {
             }
             eventRepository.save(event);
             icsService.invalidateDoDreamDataByUpdate();
-            log.info("공지 상세정보 보강: dodreamId={}", detailDto.dodreamId());
         });
     }
 

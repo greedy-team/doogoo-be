@@ -40,7 +40,7 @@ public class AcademicParser {
             if (cells.size() != 5) continue;
 
             try {
-                String period  = cells.get(3).text().trim();
+                String period = cells.get(3).text().trim();
                 String content = cells.get(4).text().trim();
 
                 if (content.isBlank()) continue;
@@ -51,11 +51,10 @@ public class AcademicParser {
                 result.addAll(gradeAssigner.assign(year, dates[0], dates[1], content));
 
             } catch (Exception e) {
-                log.warn("[{}] {}: year={}, {}", ErrorCode.PARSE_FAILED.getCode(), ErrorCode.PARSE_FAILED.getMessage(), year, e.getMessage(), e);
+                log.debug("[{}] {}: year={}, {}", ErrorCode.PARSE_FAILED.getCode(), ErrorCode.PARSE_FAILED.getMessage(), year, e.getMessage(), e);
             }
         }
 
-        log.info("{}년도 학사일정 {}건 파싱 완료", year, result.size());
         return result;
     }
 }

@@ -147,7 +147,7 @@ public class DodreamParser {
                     try {
                         closedIds.add(Long.parseLong(link.attr("data-idx")));
                     } catch (Exception e) {
-                        log.warn("[{}] {}: {}", ErrorCode.INVALID_HTML_STRUCTURE.getCode(), ErrorCode.INVALID_HTML_STRUCTURE.getMessage(), link.attr("data-id"), e);
+                        log.debug("[{}] {}: {}", ErrorCode.INVALID_HTML_STRUCTURE.getCode(), ErrorCode.INVALID_HTML_STRUCTURE.getMessage(), link.attr("data-idx"), e);
                     }
                 }
             }
