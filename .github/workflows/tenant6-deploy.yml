@@ -41,8 +41,7 @@ jobs:
           password: ${{ secrets.TENANT_PW }}
           port: ${{ secrets.TENANT_SSH_PORT }}
           script: |
-            sudo fuser -k 8080/tcp || true
-            
+            fuser -k 8080/tcp || true
             mkdir -p /config/logs/doogoo
             
             cd /config
