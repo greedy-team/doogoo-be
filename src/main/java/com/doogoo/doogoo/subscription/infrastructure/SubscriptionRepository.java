@@ -20,25 +20,21 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, Long
     @Modifying(clearAutomatically = true)
     @Query("""
             UPDATE Subscription s
-            SET s.lastAccessedAt = :now
+            SET s.lastAccessedAt = :time
             WHERE s.token = :token 
             AND s.enabled = true
-            AND (s.lastAccessedAt is null OR s.lastAccessedAt <= :thresh)
             """)
-    int touchIfStale(@Param("token") String token,
-                     @Param("now") Instant now,
-                     @Param("thresh") Instant thresh);
+    int updateLastAccessedAtByToken(@Param("token") String token, @Param("time") Instant time);
 
     @Modifying(clearAutomatically = true)
     @Query("""
-           UPDATE Subscription s
-           SET s.enabled = false
-           WHERE s.enabled = true
-           AND (
-               (s.lastAccessedAt IS NOT NULL AND s.lastAccessedAt < :inactiveBefore)
-               OR (s.lastAccessedAt IS NULL AND s.createdAt < :inactiveBefore)
-           )
-           """)
-    int disableInactive(@Param("inactiveBefore") Instant inactiveBefore);
+            DELETE Subscription s
+            WHERE s.enabled = true
+            AND (
+                (s.lastAccessedAt IS NOT NULL AND s.lastAccessedAt < :inactiveBefore)
+                OR (s.lastAccessedAt IS NULL AND s.createdAt < :inactiveBefore)
+            )
+            """)
+    int deleteInactive(@Param("inactiveBefore") Instant inactiveBefore);
 
 }

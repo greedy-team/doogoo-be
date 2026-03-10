@@ -20,7 +20,6 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
@@ -50,6 +49,7 @@ public class IcsService {
     private final SubscriptionReader subscriptionReader;
     private final ObjectMapper objectMapper;
     private final Cache<String, String> icsCache;
+    private final Cache<String, Subscription> tokenCache;
     private final Cache<String, List<AcademicSchedule>> academicNoticesCache;
     private final Cache<String, List<Event>> doDreamNoticesCache;
     private final Semaphore semaphore;
@@ -60,6 +60,7 @@ public class IcsService {
                       SubscriptionReader subscriptionReader,
                       ObjectMapper objectMapper,
                       Cache<String, String> icsCache,
+                      Cache<String, Subscription> tokenCache,
                       Cache<String, List<AcademicSchedule>> academicNoticesCache,
                       Cache<String, List<Event>> doDreamNoticesCache,
                       Semaphore semaphore) {
@@ -69,25 +70,42 @@ public class IcsService {
         this.subscriptionReader = subscriptionReader;
         this.objectMapper = objectMapper;
         this.icsCache = icsCache;
+        this.tokenCache = tokenCache;
         this.academicNoticesCache = academicNoticesCache;
         this.doDreamNoticesCache = doDreamNoticesCache;
         this.semaphore = semaphore;
     }
 
+    public Subscription getSubscriptionByToken(String token) {
+        return tokenCache.get(token, k -> {
+                    Subscription sub = subscriptionReader.getByToken(k);
+                    touch(k);
+                    return sub;
+                }
+        );
+    }
+
     public String getIcsByToken(String token) {
-        Subscription sub = subscriptionReader.getByToken(token);
-        touch(token);
-        String key = sub.getFilterHash();
+        Subscription sub = getSubscriptionByToken(token);
+        String key = sub.getSourceType().name() + ":" + sub.getFilterHash();
         return icsCache.get(key, k -> renderWithLimit(sub));
+    }
+
+    public void invalidateAcademicDataByUpdate() {
+        academicNoticesCache.invalidateAll();
+        invalidateIcsCacheBySourceType(KEY_ACADEMIC);
+    }
+
+    public void invalidateDoDreamDataByUpdate() {
+        doDreamNoticesCache.invalidateAll();
+        invalidateIcsCacheBySourceType(KEY_DODREAM);
     }
 
     private String renderWithLimit(Subscription subscription) {
         boolean acquired = false;
         try {
-            acquired = semaphore.tryAcquire(5, TimeUnit.SECONDS);
-            if (!acquired) {
-                throw new DoogooException(ErrorCode.TOO_MANY_REQUESTS);
-            }
+            semaphore.acquire();
+            acquired = true;
             return render(subscription);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
@@ -97,20 +115,13 @@ public class IcsService {
         }
     }
 
-    public void invalidateAcademicDataByUpdate() {
-        academicNoticesCache.invalidateAll();
-        icsCache.invalidateAll();
-    }
-
-    public void invalidateDoDreamDataByUpdate() {
-        doDreamNoticesCache.invalidateAll();
-        icsCache.invalidateAll();
-    }
-
     private void touch(String token) {
-        Instant now = Instant.now();
-        Instant thresh = now.minus(8, ChronoUnit.HOURS);
-        subscriptionRepository.touchIfStale(token, now, thresh);
+        subscriptionRepository.updateLastAccessedAtByToken(token, Instant.now());
+    }
+
+
+    private void invalidateIcsCacheBySourceType(String type) {
+        icsCache.asMap().keySet().removeIf(key -> key.startsWith(type + ":"));
     }
 
     private String render(Subscription subscription) {
@@ -234,7 +245,8 @@ public class IcsService {
             try {
                 Keyword kw = Keyword.fromId(keywords.get(0));
                 desc = "카테고리: " + kw.displayName();
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+            }
         }
 
         sb.append("BEGIN:VEVENT\r\n");
@@ -265,7 +277,9 @@ public class IcsService {
         return s.replace("\\", "\\\\").replace(";", "\\;").replace(",", "\\,").replace("\n", "\\n");
     }
 
-    /** RFC 5545: 75 octet 초과 라인을 CRLF + 공백으로 접어서 반환 */
+    /**
+     * RFC 5545: 75 octet 초과 라인을 CRLF + 공백으로 접어서 반환
+     */
     private static String fold(String ics) {
         StringBuilder result = new StringBuilder();
         int start = 0;
