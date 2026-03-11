@@ -51,9 +51,9 @@ public class GlobalExceptionHandler {
         );
 
         if (status >= 500) {
-            JsonLog.error(GlobalExceptionHandler.class, errorLog, t);
+            JsonLog.error(GlobalExceptionHandler.class, errorLog);
         } else {
-            JsonLog.warn(GlobalExceptionHandler.class, errorLog, t);
+            JsonLog.warn(GlobalExceptionHandler.class, errorLog);
         }
     }
 

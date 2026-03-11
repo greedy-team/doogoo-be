@@ -315,7 +315,7 @@ public class IcsService {
                     type.getSimpleName(),
                     token,
                     e.getOriginalMessage()
-            ), e);
+            ));
             return null;
         }
     }
