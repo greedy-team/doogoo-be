@@ -30,9 +30,18 @@
             <totalSizeCap>600MB</totalSizeCap>
         </rollingPolicy>
 
-        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-            <timestampPattern>yyyy-MM-dd HH:mm:ss.SSS</timestampPattern>
-            <timeZone>Asia/Seoul</timeZone>
+        <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+            <providers>
+                <timestamp>
+                    <fieldName>@timestamp</fieldName>
+                    <pattern>yyyy-MM-dd HH:mm:ss.SSS</pattern>
+                    <timeZone>Asia/Seoul</timeZone>
+                </timestamp>
+
+                <logLevel/>
+                <mdc/>
+                <arguments/>
+            </providers>
         </encoder>
     </appender>
 
@@ -54,9 +63,18 @@
             <totalSizeCap>200MB</totalSizeCap>
         </rollingPolicy>
 
-        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-            <timestampPattern>yyyy-MM-dd HH:mm:ss.SSS</timestampPattern>
-            <timeZone>Asia/Seoul</timeZone>
+        <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+            <providers>
+                <timestamp>
+                    <fieldName>@timestamp</fieldName>
+                    <pattern>yyyy-MM-dd HH:mm:ss.SSS</pattern>
+                    <timeZone>Asia/Seoul</timeZone>
+                </timestamp>
+
+                <logLevel/>
+                <mdc/>
+                <arguments/>
+            </providers>
         </encoder>
     </appender>
 

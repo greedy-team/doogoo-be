@@ -81,7 +81,7 @@ public class AiClassifier {
                     ErrorCode.AI_CLASSIFICATION_FAILED.getStatus().value(),
                     ErrorCode.AI_CLASSIFICATION_FAILED.getCode(),
                     e.getMessage()
-            ), e);
+            ));
             return AiClassifyResult.fallback();
         }
     }
@@ -100,7 +100,7 @@ public class AiClassifier {
                     ErrorCode.AI_CLASSIFICATION_FAILED.getStatus().value(),
                     ErrorCode.AI_CLASSIFICATION_FAILED.getCode(),
                     e.getMessage()
-            ), e);
+            ));
             return AiClassifyResult.fallback();
         }
     }
