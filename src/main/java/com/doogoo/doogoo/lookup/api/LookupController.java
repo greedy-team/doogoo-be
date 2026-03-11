@@ -6,7 +6,9 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import java.util.List;
+
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -37,13 +39,6 @@ public class LookupController {
         return new CollegesResponse(lookupQueryService.getColleges());
     }
 
-    @Operation(summary = "학과 목록 (평면)")
-    @ApiResponse(responseCode = "200", description = "성공")
-    @GetMapping("/departments")
-    public DepartmentsResponse departments() {
-        return new DepartmentsResponse(lookupQueryService.getDepartments());
-    }
-
     @Operation(summary = "키워드 목록")
     @ApiResponse(responseCode = "200", description = "성공")
     @GetMapping("/keywords")
@@ -52,11 +47,14 @@ public class LookupController {
     }
 
     @Schema(description = "학년 목록")
-    public record GradesResponse(List<IdName> grades) {}
+    public record GradesResponse(List<IdName> grades) {
+    }
+
     @Schema(description = "학부·학과 2계층 목록")
-    public record CollegesResponse(List<LookupQueryService.CollegeWithDepartments> colleges) {}
-    @Schema(description = "학과 목록 (평면)")
-    public record DepartmentsResponse(List<IdName> departments) {}
+    public record CollegesResponse(List<LookupQueryService.CollegeWithDepartments> colleges) {
+    }
+
     @Schema(description = "키워드 목록")
-    public record KeywordsResponse(List<LookupQueryService.KeywordItem> keywords) {}
+    public record KeywordsResponse(List<LookupQueryService.KeywordItem> keywords) {
+    }
 }
