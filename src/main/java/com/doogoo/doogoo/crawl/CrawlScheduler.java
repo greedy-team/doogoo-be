@@ -129,7 +129,7 @@ public class CrawlScheduler {
                                     ErrorCode.CRAWL_FAILED.getStatus().value(),
                                     ErrorCode.CRAWL_FAILED.getCode(),
                                     e.getMessage()
-                            ), e);
+                            ));
                 }
             }
             long latency = System.currentTimeMillis() - start;
@@ -152,7 +152,7 @@ public class CrawlScheduler {
                             ErrorCode.CRAWL_FAILED.getStatus().value(),
                             ErrorCode.CRAWL_FAILED.getCode(),
                             e.getMessage()
-                    ), e);
+                    ));
         }
 
 
@@ -195,7 +195,7 @@ public class CrawlScheduler {
                                     ErrorCode.CRAWL_FAILED.getStatus().value(),
                                     ErrorCode.CRAWL_FAILED.getCode(),
                                     e.getMessage()
-                            ), e);
+                            ));
                 }
             }
             long latency = System.currentTimeMillis() - start;
@@ -217,7 +217,7 @@ public class CrawlScheduler {
                             ErrorCode.CRAWL_FAILED.getStatus().value(),
                             ErrorCode.CRAWL_FAILED.getCode(),
                             e.getMessage()
-                    ), e);
+                    ));
         }
 
 
@@ -241,7 +241,7 @@ public class CrawlScheduler {
                             ErrorCode.ACADEMIC_CRAWL_FAILED.getStatus().value(),
                             ErrorCode.ACADEMIC_CRAWL_FAILED.getCode(),
                             e.getMessage()
-                    ), e);
+                    ));
         }
     }
 
@@ -275,7 +275,7 @@ public class CrawlScheduler {
                             ErrorCode.CRAWL_FAILED.getStatus().value(),
                             ErrorCode.CRAWL_FAILED.getCode(),
                             e.getMessage()
-                    ), e);
+                    ));
         }
     }
 }
