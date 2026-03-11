@@ -43,9 +43,9 @@ jobs:
           script: |
             fuser -k 8080/tcp || true
             
-            mkdir -p /home/tenant-user/logs/doogoo
+            mkdir -p /home/${{ secrets.TENANT_USER }}/logs/doogoo
             
-            nohup java -Xmx512m -jar /home/tenant-user/app/*.jar > /config/logs/doogoo/app.log 2>&1 &
+            nohup java -Xmx512m -jar /home/${{ secrets.TENANT_USER }}/app/*.jar > /home/${{ secrets.TENANT_USER }}/logs/doogoo/console.log 2>&1 &
             
             sleep 5
             ps aux | grep java | grep -v grep || true
