@@ -330,14 +330,17 @@ public class IcsService {
     private boolean passesDoDreamFilter(Event event, IssueDoDreamIcsRequest filter) {
         if (filter == null) return true;
         String deptId = event.getDepartmentId();
-        if ("all".equals(deptId)) return true;
-        if (deptId != null && filter.selectedDepartmentId() != null && !deptId.equals(filter.selectedDepartmentId())) {
-            return false;
+        boolean isGlobalDept = (deptId == null || "all".equals(deptId));
+
+        // 학과 필터: "all"(전체)로 분류된 이벤트는 학과 조건에서만 항상 포함하되,
+        // 키워드 필터는 아래에서 그대로 적용한다.
+        if (filter.selectedDepartmentId() != null) {
+            if (!isGlobalDept && !deptId.equals(filter.selectedDepartmentId())) return false;
         }
         if (filter.selectedMinorDepartmentId() != null) {
-            if (deptId == null) return true;
-            if (!deptId.equals(filter.selectedMinorDepartmentId())) return false;
+            if (!isGlobalDept && !deptId.equals(filter.selectedMinorDepartmentId())) return false;
         }
+
         List<String> selectedKeywordIds = filter.selectedKeywordId();
         if (selectedKeywordIds != null && !selectedKeywordIds.isEmpty()) {
             List<String> eventKeywords = event.getKeywordIds();
