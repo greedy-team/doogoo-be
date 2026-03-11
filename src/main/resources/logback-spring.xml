@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration scan="true" scanPeriod="30 seconds">
 
-    <property name="logdir" value="/config/logs"/>
+    <property name="logdir" value="${user.home}/logs"/>
     <property name="serviceName" value="doogoo"/>
 
     <!-- 콘솔용 -->
@@ -26,7 +26,7 @@
         <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
             <fileNamePattern>${logdir}/${serviceName}/%d{yyyy-MM-dd}.%i.prod.log.gz</fileNamePattern>
             <maxFileSize>30MB</maxFileSize>
-            <maxHistory>14</maxHistory>
+            <maxHistory>1</maxHistory>
             <totalSizeCap>600MB</totalSizeCap>
         </rollingPolicy>
 
@@ -50,7 +50,7 @@
         <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
             <fileNamePattern>${logdir}/${serviceName}/%d{yyyy-MM-dd}.%i.debug.log.gz</fileNamePattern>
             <maxFileSize>20MB</maxFileSize>
-            <maxHistory>5</maxHistory>
+            <maxHistory>1</maxHistory>
             <totalSizeCap>200MB</totalSizeCap>
         </rollingPolicy>
 
