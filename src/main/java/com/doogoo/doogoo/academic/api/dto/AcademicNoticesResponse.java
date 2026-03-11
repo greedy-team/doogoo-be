@@ -15,6 +15,9 @@ public record AcademicNoticesResponse(
             String title,
             LocalDateTime startAt,
             LocalDateTime endAt,
-            @Schema(description = "대상 학년 ID (null=전체, 1~4=해당 학년)", example = "2") String gradeId
+            @Schema(
+            description = "대상 학년 ID. null=전체 학년, 1~4=해당 학년",
+            example = "2"
+    ) String gradeId
     ) {}
 }
