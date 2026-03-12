@@ -20,7 +20,7 @@ public class AcademicGradeAssigner {
     }
 
     public List<AcademicScheduleDto> assign(int year, LocalDate startDate, LocalDate endDate, String content) {
-        if (content.contains("수강신청")) {
+        if (content.contains("학기 수강신청")) {
             if (content.contains("계절")) {
                 return List.of(new AcademicScheduleDto(year, startDate, endDate, content, null));
             }
