@@ -397,8 +397,7 @@ public class IcsService {
 
         String desc = "신청기간:" + dateFormat(applyStart, applyEnd) + "\\n"
                 + "운영기간:" + dateFormat(operateStart, operateEnd) + "\\n"
-                + (event.getDescriptionSummery() != null ? event.getDescriptionSummery() : "");
-
+                + (event.getDescriptionSummary() != null ? event.getDescriptionSummary() : "");
 
         sb.append("BEGIN:VEVENT\r\n");
         sb.append("UID:").append(uid).append("\r\n");
