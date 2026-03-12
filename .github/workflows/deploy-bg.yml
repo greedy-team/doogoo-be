@@ -186,7 +186,7 @@ jobs:
         run: |
           ssh -i ~/.ssh/id_ed25519 -p "$NGINX_PORT" \
             "$SSH_USER@$NGINX_HOST" \
-            "sudo /usr/local/bin/switch-nginx.sh ${{ steps.decide.outputs.target_color }}"
+            "sudo -n /usr/local/bin/switch-nginx.sh ${{ steps.decide.outputs.target_color }}"
 
       - name: Public health check through nginx
         shell: bash
