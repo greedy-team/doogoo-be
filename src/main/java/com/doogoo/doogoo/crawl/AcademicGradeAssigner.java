@@ -36,8 +36,11 @@ public class AcademicGradeAssigner {
     }
 
     private List<AcademicScheduleDto> splitCourseRegistration(int year, LocalDate startDate, LocalDate endDate, String content) {
-        long businessDays = businessDayCalculator.countBusinessDays(startDate, endDate);
-        String[] gradeOrder = businessDays >= 5 ? GRADE_FULL : GRADE_SHORT;
+        boolean is2nd = content.contains("2학기");
+        String[] gradeOrder = is2nd ? GRADE_FULL : GRADE_SHORT;
+        if (!is2nd && businessDayCalculator.countBusinessDays(startDate, endDate) == 1) {
+            return List.of(new AcademicScheduleDto(year, startDate, endDate, content, "1"));
+        }
 
         List<AcademicScheduleDto> result = new ArrayList<>();
         LocalDate current = startDate;
