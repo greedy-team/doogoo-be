@@ -1,0 +1,206 @@
+name: Deploy Blue-Green (split servers)
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_color:
+        description: "배포 후 active로 둘 색 (blue / green)"
+        required: false
+        default: ""
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Build
+        run: |
+          chmod +x ./gradlew
+          ./gradlew clean bootJar -x test
+
+      - name: Select executable jar
+        shell: bash
+        run: |
+          JAR_PATH=$(find build/libs -maxdepth 1 -type f -name "*.jar" ! -name "*-plain.jar" | head -n 1)
+
+          if [ -z "$JAR_PATH" ]; then
+            echo "실행 가능한 jar를 찾지 못했습니다."
+            exit 1
+          fi
+
+          mkdir -p jar-out
+          cp "$JAR_PATH" jar-out/app.jar
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-jar
+          path: jar-out/app.jar
+          retention-days: 2
+
+  deploy-app-then-switch:
+    needs: build
+    runs-on: ubuntu-latest
+
+    env:
+      SSH_USER: ${{ secrets.SSH_USER }}
+
+      NGINX_HOST: ${{ secrets.NGINX_HOST }}
+      NGINX_PORT: ${{ secrets.NGINX_PORT }}
+
+      APP_BLUE_HOST: ${{ secrets.APP_BLUE_HOST }}
+      APP_BLUE_PORT: ${{ secrets.APP_BLUE_PORT }}
+
+      APP_GREEN_HOST: ${{ secrets.APP_GREEN_HOST }}
+      APP_GREEN_PORT: ${{ secrets.APP_GREEN_PORT }}
+
+      DOOGOO_PUBLIC_PORT: ${{ secrets.DOOGOO_PUBLIC_PORT }}
+
+    steps:
+      - name: Download jar
+        uses: actions/download-artifact@v4
+        with:
+          name: app-jar
+          path: jar-out
+
+      - name: Prepare SSH
+        shell: bash
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+
+          ssh-keyscan -p "$NGINX_PORT" "$NGINX_HOST" >> ~/.ssh/known_hosts
+          ssh-keyscan -p "$APP_BLUE_PORT" "$APP_BLUE_HOST" >> ~/.ssh/known_hosts
+          ssh-keyscan -p "$APP_GREEN_PORT" "$APP_GREEN_HOST" >> ~/.ssh/known_hosts
+
+      - name: Decide target color
+        id: decide
+        shell: bash
+        run: |
+          INPUT_COLOR="${{ github.event.inputs.target_color }}"
+
+          if [ -n "$INPUT_COLOR" ]; then
+            if [ "$INPUT_COLOR" != "blue" ] && [ "$INPUT_COLOR" != "green" ]; then
+              echo "target_color는 blue 또는 green 이어야 합니다."
+              exit 1
+            fi
+            TARGET_COLOR="$INPUT_COLOR"
+            CURRENT_ACTIVE="manual"
+          else
+            CURRENT_ACTIVE=$(ssh -i ~/.ssh/id_rsa -p "$NGINX_PORT" "$SSH_USER@$NGINX_HOST" "cat /etc/doogoo/active 2>/dev/null || echo blue" | tr -d '\r\n')
+
+            if [ "$CURRENT_ACTIVE" = "blue" ]; then
+              TARGET_COLOR="green"
+            elif [ "$CURRENT_ACTIVE" = "green" ]; then
+              TARGET_COLOR="blue"
+            else
+              echo "/etc/doogoo/active 값이 올바르지 않습니다: $CURRENT_ACTIVE"
+              exit 1
+            fi
+          fi
+
+          if [ "$TARGET_COLOR" = "blue" ]; then
+            TARGET_HOST="$APP_BLUE_HOST"
+            TARGET_PORT="$APP_BLUE_PORT"
+            TARGET_HEALTH_PORT="$APP_BLUE_PORT"
+          else
+            TARGET_HOST="$APP_GREEN_HOST"
+            TARGET_PORT="$APP_GREEN_PORT"
+            TARGET_HEALTH_PORT="$APP_GREEN_PORT"
+          fi
+
+          echo "current_active=$CURRENT_ACTIVE" >> "$GITHUB_OUTPUT"
+          echo "target_color=$TARGET_COLOR" >> "$GITHUB_OUTPUT"
+          echo "target_host=$TARGET_HOST" >> "$GITHUB_OUTPUT"
+          echo "target_port=$TARGET_PORT" >> "$GITHUB_OUTPUT"
+          echo "target_health_port=$TARGET_HEALTH_PORT" >> "$GITHUB_OUTPUT"
+
+      - name: Copy jar to target app server
+        shell: bash
+        run: |
+          scp -i ~/.ssh/id_rsa -P "${{ steps.decide.outputs.target_port }}" \
+            jar-out/app.jar \
+            "$SSH_USER@${{ steps.decide.outputs.target_host }}:/opt/doogoo/app.jar"
+
+      - name: Deploy on target app server
+        shell: bash
+        run: |
+          ssh -i ~/.ssh/id_rsa -p "${{ steps.decide.outputs.target_port }}" \
+            "$SSH_USER@${{ steps.decide.outputs.target_host }}" \
+            "cd /opt/doogoo && chmod +x ./deploy-app.sh && ./deploy-app.sh app.jar ${{ steps.decide.outputs.target_color }}"
+
+      - name: Health check on target app server
+        shell: bash
+        run: |
+          ssh -i ~/.ssh/id_rsa -p "${{ steps.decide.outputs.target_port }}" \
+            "$SSH_USER@${{ steps.decide.outputs.target_host }}" \
+            '
+            set -eu
+
+            OK=0
+            for i in $(seq 1 30); do
+              if /usr/bin/curl -fsS "http://127.0.0.1:${{ steps.decide.outputs.target_health_port }}/actuator/health"; then
+                OK=1
+                break
+              fi
+              echo "health retry: $i"
+              sleep 2
+            done
+
+            if [ "$OK" -ne 1 ]; then
+              echo "앱 서버 health check 실패"
+              exit 1
+            fi
+            '
+
+      - name: Switch nginx
+        shell: bash
+        run: |
+          ssh -i ~/.ssh/id_rsa -p "$NGINX_PORT" \
+            "$SSH_USER@$NGINX_HOST" \
+            "sudo /usr/local/bin/switch-nginx.sh ${{ steps.decide.outputs.target_color }}"
+
+      - name: Public health check through nginx
+        shell: bash
+        run: |
+          PUBLIC_PORT="${DOOGOO_PUBLIC_PORT:-50018}"
+
+          ssh -i ~/.ssh/id_rsa -p "$NGINX_PORT" "$SSH_USER@$NGINX_HOST" "
+            set -eu
+
+            OK=0
+            for i in \$(seq 1 20); do
+              if /usr/bin/curl -fsS http://127.0.0.1:${PUBLIC_PORT}/actuator/health; then
+                OK=1
+                break
+              fi
+              echo \"public health retry: \$i\"
+              sleep 2
+            done
+
+            if [ \"\$OK\" -ne 1 ]; then
+              echo 'nginx 전환 후 health check 실패'
+              exit 1
+            fi
+          "
+
+      - name: Summary
+        shell: bash
+        run: |
+          echo "current_active = ${{ steps.decide.outputs.current_active }}"
+          echo "target_color   = ${{ steps.decide.outputs.target_color }}"
+          echo "target_host    = ${{ steps.decide.outputs.target_host }}"
+          echo "target_port    = ${{ steps.decide.outputs.target_port }}"
