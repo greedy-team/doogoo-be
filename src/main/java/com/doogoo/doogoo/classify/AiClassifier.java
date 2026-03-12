@@ -12,11 +12,15 @@ import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
+import com.doogoo.doogoo.lookup.domain.Department;
+
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Component
 public class AiClassifier {
@@ -25,12 +29,14 @@ public class AiClassifier {
     private final String model;
     private final String apiUrl;
     private final String promptTemplate;
+    private final String summarizeTemplate;
 
     public AiClassifier(
             @Value("${openai.api-key}") String apiKey,
             @Value("${openai.model}") String model,
             @Value("${openai.url}") String apiUrl,
             @Value("classpath:prompts/classify.txt") Resource promptResource,
+            @Value("classpath:prompts/summarize.txt") Resource summarizeResource,
             ObjectMapper objectMapper
     ) {
         this.model = model;
@@ -39,6 +45,7 @@ public class AiClassifier {
 
         try {
             this.promptTemplate = new String(promptResource.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+            this.summarizeTemplate = new String(summarizeResource.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
         } catch (IOException e) {
             throw new IllegalStateException("프롬프트 파일 로드 실패", e);
         }
@@ -57,7 +64,10 @@ public class AiClassifier {
     public AiClassifyResult classify(String title, String description, String department) {
         try {
             String dept = (department != null && !department.isBlank()) ? department : "정보 없음";
-            String prompt = promptTemplate.formatted(title, description, dept);
+            String departmentList = Arrays.stream(Department.values())
+                    .map(d -> d.displayName() + " (" + d.id() + ")")
+                    .collect(Collectors.joining("\n"));
+            String prompt = promptTemplate.formatted(title, description, dept, departmentList);
 
             Map<String, Object> requestBody = Map.of(
                     "model", model,
@@ -83,6 +93,38 @@ public class AiClassifier {
                     e.getMessage()
             ));
             return AiClassifyResult.fallback();
+        }
+    }
+
+    public String summarize(String title, String description) {
+        if (description == null || description.isBlank()) return null;
+        try {
+            String prompt = summarizeTemplate.formatted(title, description);
+
+            Map<String, Object> requestBody = Map.of(
+                    "model", model,
+                    "messages", List.of(
+                            Map.of("role", "user", "content", prompt)
+                    )
+            );
+
+            String responseBody = restClient.post()
+                    .uri(apiUrl)
+                    .body(requestBody)
+                    .retrieve()
+                    .body(String.class);
+
+            OpenAiResponse response = objectMapper.readValue(responseBody, OpenAiResponse.class);
+            return response.choices().get(0).message().content().trim();
+        } catch (Exception e) {
+            JsonLog.warn(AiClassifier.class, new LogDto.ErrorLog(
+                    "ai.summarize.fail",
+                    "openai-api",
+                    ErrorCode.AI_CLASSIFICATION_FAILED.getStatus().value(),
+                    ErrorCode.AI_CLASSIFICATION_FAILED.getCode(),
+                    e.getMessage()
+            ), e);
+            return null;
         }
     }
 
