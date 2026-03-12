@@ -44,6 +44,9 @@ public class Event {
     @Column(columnDefinition = "TEXT")
     private String description;
 
+    @Column(columnDefinition = "TEXT")
+    private String descriptionSummary;
+
     private String mileage;
 
     private String dodreamUrl;
@@ -115,6 +118,12 @@ public class Event {
         if (operateEnd != null) this.operateEnd = operateEnd;
     }
 
+    public void applyDescriptionSummary(String summary) {
+        if (summary != null) {
+            this.descriptionSummary = summary;
+        }
+    }
+
     public void applyAiResult(List<String> keywords, String departmentId) {
         if (keywords != null) {
             this.keywordIds = new ArrayList<>(keywords);
@@ -157,6 +166,7 @@ public class Event {
     public LocalDateTime getOperateStart() { return operateStart; }
     public LocalDateTime getOperateEnd() { return operateEnd; }
     public String getDescription() { return description; }
+    public String getDescriptionSummary() { return descriptionSummary; }
     public String getMileage() { return mileage; }
     public String getDodreamUrl() { return dodreamUrl; }
     public List<String> getKeywordIds() { return keywordIds; }

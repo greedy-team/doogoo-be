@@ -31,19 +31,20 @@ public class EventSyncService {
     }
 
     @Transactional
-    public Event saveNew(EventDto dto, AiClassifyResult aiResult) {
+    public Event saveNew(EventDto dto, AiClassifyResult aiResult, String summary) {
         Event event = Event.createNew(
                 dto.dodreamId(), dto.title(), dto.department(),
                 dto.applyStart(), dto.applyEnd(),
                 dto.operateStart(), dto.operateEnd(),
                 dto.description(), dto.location(), dto.mileage(), dto.dodreamUrl()
         );
-        String departmentId = resolveDepartmentId(dto.department());
+        String departmentId = resolveDepartmentId(dto.title());
         if (aiResult != null) {
             event.applyAiResult(aiResult.keywords(), departmentId);
         } else {
             event.applyAiResult(List.of("k_7"), departmentId);
         }
+        event.applyDescriptionSummary(summary);
         Event saved = eventRepository.save(event);
         icsService.invalidateDoDreamDataByUpdate();
         return saved;
@@ -63,12 +64,13 @@ public class EventSyncService {
     }
 
     @Transactional
-    public void enrichWithDetail(EventDto detailDto, AiClassifyResult aiResult) {
+    public void enrichWithDetail(EventDto detailDto, AiClassifyResult aiResult, String summary) {
         eventRepository.findByDodreamId(detailDto.dodreamId()).ifPresent(event -> {
             event.updateDetail(detailDto.description(), detailDto.location(), detailDto.mileage(), detailDto.operateStart(), detailDto.operateEnd());
             if (aiResult != null) {
                 event.applyAiResult(aiResult.keywords(), event.getDepartmentId());
             }
+            event.applyDescriptionSummary(summary);
             eventRepository.save(event);
             icsService.invalidateDoDreamDataByUpdate();
         });
@@ -83,23 +85,25 @@ public class EventSyncService {
     }
 
     @Transactional
-    public int closeExpiredEvents() {
-        int updated = eventRepository.closeExpiredEvents(LocalDateTime.now());
-        if (updated > 0) icsService.invalidateDoDreamDataByUpdate();
-        log.info("만료 공지 일괄 마감 처리: {}건", updated);
-        return updated;
+    public int deleteExpiredEvents() {
+        int deleted = eventRepository.deleteExpiredEvents(LocalDateTime.now());
+        if (deleted > 0) icsService.invalidateDoDreamDataByUpdate();
+        log.info("만료 공지 일괄 삭제 처리: {}건", deleted);
+        return deleted;
     }
 
     public List<Event> findOpenEvents() {
         return eventRepository.findByStatus(EventStatus.OPEN);
     }
 
-    private String resolveDepartmentId(String departmentName) {
-        if (departmentName == null || departmentName.isBlank()) return "all";
-        return Arrays.stream(Department.values())
-                .filter(d -> d.displayName().equals(departmentName))
-                .map(Department::id)
-                .findFirst()
-                .orElse("all");
+    private String resolveDepartmentId(String title) {
+        if (title != null && !title.isBlank()) {
+            return Arrays.stream(Department.values())
+                    .filter(d -> title.contains(d.displayName()))
+                    .map(Department::id)
+                    .findFirst()
+                    .orElse("all");
+        }
+        return "all";
     }
 }

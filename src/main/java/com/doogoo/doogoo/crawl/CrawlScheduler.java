@@ -118,7 +118,8 @@ public class CrawlScheduler {
                                 detailed.title(),
                                 detailed.description(),
                                 detailed.department());
-                        syncService.saveNew(detailed, aiResult);
+                        String summary = aiClassifier.summarize(detailed.title(), detailed.description());
+                        syncService.saveNew(detailed, aiResult, summary);
                         newCount++;
                     }
                 } catch (Exception e) {
@@ -183,8 +184,11 @@ public class CrawlScheduler {
                     AiClassifyResult aiResult = descriptionChanged
                             ? aiClassifier.classify(detailed.title(), detailed.description(), detailed.department())
                             : null;
+                    String summary = descriptionChanged
+                            ? aiClassifier.summarize(detailed.title(), detailed.description())
+                            : null;
 
-                    syncService.enrichWithDetail(detailed, aiResult);
+                    syncService.enrichWithDetail(detailed, aiResult, summary);
                     syncCount++;
                     if (!descriptionChanged) skipCount++;
                 } catch (Exception e) {
@@ -257,7 +261,7 @@ public class CrawlScheduler {
                         null
                 ));
         try {
-            int closedCount = syncService.closeExpiredEvents();
+            int closedCount = syncService.deleteExpiredEvents();
             long latency = System.currentTimeMillis() - start;
 
             JsonLog.info(

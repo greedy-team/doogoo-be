@@ -3,6 +3,7 @@ package com.doogoo.doogoo.lookup.domain;
 import java.util.Arrays;
 
 public enum Keyword {
+    DEPARTMENT("K_0","전공선택","학과","department"),
     COMPETITION("k_1", "학술/연구", "경진대회, 공모전, 학술행사", "competition"),
     CAREER("k_2", "취창업", "취업, 창업, 진로 관련 행사", "career"),
     VOLUNTEER("k_3", "봉사·사회참여", "봉사, 사회참여 활동", "volunteer"),
