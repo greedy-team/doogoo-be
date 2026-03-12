@@ -1,0 +1,44 @@
+name: Deploy Blue-Green (split servers)
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_color:
+        description: '배포 후 active로 둘 색 (blue / green)'
+        required: true
+        default: 'green'
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Build
+        run: ./gradlew clean bootJar -x test
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-jar
+          path: build/libs/*.jar
+
+  deploy-app-then-switch:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download jar
+        uses: actions/download-artifact@v4
+        with:
+          name: app-jar
+          path: jar-out
+
+      - name: Placeholder
+        run: |
+          echo "Configure SCP to APP_BLUE_HOST / APP_GREEN_HOST then deploy-app.sh"
+          echo "Then SSH to NGINX_HOST for switch-nginx.sh"
