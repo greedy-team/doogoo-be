@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
+import java.util.concurrent.CompletableFuture;
 
 @Tag(name = "Admin", description = "관리자 기능")
 @RestController
@@ -39,11 +40,12 @@ public class AdminController {
         crawlScheduler.crawlAcademicSchedule();
     }
 
-    @Operation(summary = "두드림 정기 크롤링 (수동 실행)", description = "두드림 공지를 즉시 크롤링합니다.")
+    @Operation(summary = "두드림 정기 크롤링 (수동 실행)", description = "두드림 공지를 즉시 크롤링합니다. 백그라운드에서 실행됩니다.")
     @PostMapping("/crawl/dodream")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @ResponseStatus(HttpStatus.ACCEPTED)
     public void crawlDodream() {
-        crawlScheduler.regularCrawl();
+        CompletableFuture.runAsync(crawlScheduler::regularCrawl);
     }
+
 }
 
