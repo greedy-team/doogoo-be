@@ -79,8 +79,8 @@ jobs:
         shell: bash
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" | tr -d '\r' > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" | tr -d '\r' > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
 
           ssh-keyscan -p "$NGINX_PORT" "$NGINX_HOST" >> ~/.ssh/known_hosts
           ssh-keyscan -p "$APP_BLUE_PORT" "$APP_BLUE_HOST" >> ~/.ssh/known_hosts
@@ -100,7 +100,7 @@ jobs:
             TARGET_COLOR="$INPUT_COLOR"
             CURRENT_ACTIVE="manual"
           else
-            CURRENT_ACTIVE=$(ssh -i ~/.ssh/id_rsa -p "$NGINX_PORT" "$SSH_USER@$NGINX_HOST" "cat /etc/doogoo/active 2>/dev/null || echo blue" | tr -d '\r\n')
+            CURRENT_ACTIVE=$(ssh -i ~/.ssh/id_ed25519 -p "$NGINX_PORT" "$SSH_USER@$NGINX_HOST" "cat /etc/doogoo/active 2>/dev/null || echo blue" | tr -d '\r\n')
 
             if [ "$CURRENT_ACTIVE" = "blue" ]; then
               TARGET_COLOR="green"
@@ -131,21 +131,21 @@ jobs:
       - name: Copy jar to target app server
         shell: bash
         run: |
-          scp -i ~/.ssh/id_rsa -P "${{ steps.decide.outputs.target_port }}" \
+          scp -i ~/.ssh/id_ed25519 -P "${{ steps.decide.outputs.target_port }}" \
             jar-out/app.jar \
             "$SSH_USER@${{ steps.decide.outputs.target_host }}:/opt/doogoo/app.jar"
 
       - name: Deploy on target app server
         shell: bash
         run: |
-          ssh -i ~/.ssh/id_rsa -p "${{ steps.decide.outputs.target_port }}" \
+          ssh -i ~/.ssh/id_ed25519 -p "${{ steps.decide.outputs.target_port }}" \
             "$SSH_USER@${{ steps.decide.outputs.target_host }}" \
             "cd /opt/doogoo && chmod +x ./deploy-app.sh && ./deploy-app.sh app.jar ${{ steps.decide.outputs.target_color }}"
 
       - name: Health check on target app server
         shell: bash
         run: |
-          ssh -i ~/.ssh/id_rsa -p "${{ steps.decide.outputs.target_port }}" \
+          ssh -i ~/.ssh/id_ed25519 -p "${{ steps.decide.outputs.target_port }}" \
             "$SSH_USER@${{ steps.decide.outputs.target_host }}" \
             '
             set -eu
@@ -169,7 +169,7 @@ jobs:
       - name: Switch nginx
         shell: bash
         run: |
-          ssh -i ~/.ssh/id_rsa -p "$NGINX_PORT" \
+          ssh -i ~/.ssh/id_ed25519 -p "$NGINX_PORT" \
             "$SSH_USER@$NGINX_HOST" \
             "sudo /usr/local/bin/switch-nginx.sh ${{ steps.decide.outputs.target_color }}"
 
@@ -178,7 +178,7 @@ jobs:
         run: |
           PUBLIC_PORT="${DOOGOO_PUBLIC_PORT:-50018}"
 
-          ssh -i ~/.ssh/id_rsa -p "$NGINX_PORT" "$SSH_USER@$NGINX_HOST" "
+          ssh -i ~/.ssh/id_ed25519 -p "$NGINX_PORT" "$SSH_USER@$NGINX_HOST" "
             set -eu
 
             OK=0
