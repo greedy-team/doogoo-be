@@ -29,12 +29,14 @@ public class AiClassifier {
     private final String model;
     private final String apiUrl;
     private final String promptTemplate;
+    private final String summarizeTemplate;
 
     public AiClassifier(
             @Value("${openai.api-key}") String apiKey,
             @Value("${openai.model}") String model,
             @Value("${openai.url}") String apiUrl,
             @Value("classpath:prompts/classify.txt") Resource promptResource,
+            @Value("classpath:prompts/summarize.txt") Resource summarizeResource,
             ObjectMapper objectMapper
     ) {
         this.model = model;
@@ -43,6 +45,7 @@ public class AiClassifier {
 
         try {
             this.promptTemplate = new String(promptResource.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+            this.summarizeTemplate = new String(summarizeResource.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
         } catch (IOException e) {
             throw new IllegalStateException("프롬프트 파일 로드 실패", e);
         }
@@ -90,6 +93,38 @@ public class AiClassifier {
                     e.getMessage()
             ), e);
             return AiClassifyResult.fallback();
+        }
+    }
+
+    public String summarize(String title, String description) {
+        if (description == null || description.isBlank()) return null;
+        try {
+            String prompt = summarizeTemplate.formatted(title, description);
+
+            Map<String, Object> requestBody = Map.of(
+                    "model", model,
+                    "messages", List.of(
+                            Map.of("role", "user", "content", prompt)
+                    )
+            );
+
+            String responseBody = restClient.post()
+                    .uri(apiUrl)
+                    .body(requestBody)
+                    .retrieve()
+                    .body(String.class);
+
+            OpenAiResponse response = objectMapper.readValue(responseBody, OpenAiResponse.class);
+            return response.choices().get(0).message().content().trim();
+        } catch (Exception e) {
+            JsonLog.warn(AiClassifier.class, new LogDto.ErrorLog(
+                    "ai.summarize.fail",
+                    "openai-api",
+                    ErrorCode.AI_CLASSIFICATION_FAILED.getStatus().value(),
+                    ErrorCode.AI_CLASSIFICATION_FAILED.getCode(),
+                    e.getMessage()
+            ), e);
+            return null;
         }
     }
 
