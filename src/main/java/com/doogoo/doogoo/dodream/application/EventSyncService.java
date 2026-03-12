@@ -38,7 +38,7 @@ public class EventSyncService {
                 dto.operateStart(), dto.operateEnd(),
                 dto.description(), dto.location(), dto.mileage(), dto.dodreamUrl()
         );
-        String departmentId = resolveDepartmentId(dto.department());
+        String departmentId = resolveDepartmentId(dto.title());
         if (aiResult != null) {
             event.applyAiResult(aiResult.keywords(), departmentId);
         } else {
@@ -94,12 +94,14 @@ public class EventSyncService {
         return eventRepository.findByStatus(EventStatus.OPEN);
     }
 
-    private String resolveDepartmentId(String departmentName) {
-        if (departmentName == null || departmentName.isBlank()) return "all";
-        return Arrays.stream(Department.values())
-                .filter(d -> d.displayName().equals(departmentName))
-                .map(Department::id)
-                .findFirst()
-                .orElse("all");
+    private String resolveDepartmentId(String title) {
+        if (title != null && !title.isBlank()) {
+            return Arrays.stream(Department.values())
+                    .filter(d -> title.contains(d.displayName()))
+                    .map(Department::id)
+                    .findFirst()
+                    .orElse("all");
+        }
+        return "all";
     }
 }
