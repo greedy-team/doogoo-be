@@ -79,7 +79,7 @@ jobs:
         shell: bash
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" | tr -d '\r' > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
 
           ssh-keyscan -p "$NGINX_PORT" "$NGINX_HOST" >> ~/.ssh/known_hosts
