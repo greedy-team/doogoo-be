@@ -140,7 +140,7 @@ jobs:
         run: |
           ssh -i ~/.ssh/id_ed25519 -p "${{ steps.decide.outputs.target_port }}" \
             "$SSH_USER@${{ steps.decide.outputs.target_host }}" \
-            "cd /opt/doogoo && chmod +x ./deploy-app.sh && ./deploy-app.sh app.jar ${{ steps.decide.outputs.target_color }}"
+            "cd /opt/doogoo && chmod +x ./deploy-app.sh && ./deploy-app.sh app.jar ${{ steps.decide.outputs.target_color }} skip-health"
 
       - name: Health check on target app server
         shell: bash
