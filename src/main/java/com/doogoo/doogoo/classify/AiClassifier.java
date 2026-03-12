@@ -12,11 +12,15 @@ import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
+import com.doogoo.doogoo.lookup.domain.Department;
+
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Component
 public class AiClassifier {
@@ -57,7 +61,10 @@ public class AiClassifier {
     public AiClassifyResult classify(String title, String description, String department) {
         try {
             String dept = (department != null && !department.isBlank()) ? department : "정보 없음";
-            String prompt = promptTemplate.formatted(title, description, dept);
+            String departmentList = Arrays.stream(Department.values())
+                    .map(d -> d.displayName() + " (" + d.id() + ")")
+                    .collect(Collectors.joining("\n"));
+            String prompt = promptTemplate.formatted(title, description, dept, departmentList);
 
             Map<String, Object> requestBody = Map.of(
                     "model", model,
