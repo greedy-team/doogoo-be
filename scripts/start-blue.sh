@@ -28,6 +28,7 @@ install -d -m 755 "$BLUE_DIR"
 cd "$BLUE_DIR" || exit 1
 
 export SPRING_PROFILES_ACTIVE="${SPRING_PROFILES_ACTIVE:-prod}"
+[ -f /opt/doogoo/app.env ] && . /opt/doogoo/app.env
 
 nohup java $JAVA_OPTS -jar "$JAR" --server.port="$BLUE_PORT" >>"$LOG_FILE" 2>&1 &
 echo $! > "$PID_FILE"
