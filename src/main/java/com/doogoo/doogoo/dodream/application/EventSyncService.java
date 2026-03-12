@@ -31,7 +31,7 @@ public class EventSyncService {
     }
 
     @Transactional
-    public Event saveNew(EventDto dto, AiClassifyResult aiResult) {
+    public Event saveNew(EventDto dto, AiClassifyResult aiResult, String summary) {
         Event event = Event.createNew(
                 dto.dodreamId(), dto.title(), dto.department(),
                 dto.applyStart(), dto.applyEnd(),
@@ -44,6 +44,7 @@ public class EventSyncService {
         } else {
             event.applyAiResult(List.of("k_7"), departmentId);
         }
+        event.applyDescriptionSummary(summary);
         Event saved = eventRepository.save(event);
         icsService.invalidateDoDreamDataByUpdate();
         return saved;
@@ -63,12 +64,13 @@ public class EventSyncService {
     }
 
     @Transactional
-    public void enrichWithDetail(EventDto detailDto, AiClassifyResult aiResult) {
+    public void enrichWithDetail(EventDto detailDto, AiClassifyResult aiResult, String summary) {
         eventRepository.findByDodreamId(detailDto.dodreamId()).ifPresent(event -> {
             event.updateDetail(detailDto.description(), detailDto.location(), detailDto.mileage(), detailDto.operateStart(), detailDto.operateEnd());
             if (aiResult != null) {
                 event.applyAiResult(aiResult.keywords(), event.getDepartmentId());
             }
+            event.applyDescriptionSummary(summary);
             eventRepository.save(event);
             icsService.invalidateDoDreamDataByUpdate();
         });
