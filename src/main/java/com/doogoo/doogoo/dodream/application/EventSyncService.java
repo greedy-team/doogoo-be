@@ -85,11 +85,11 @@ public class EventSyncService {
     }
 
     @Transactional
-    public int closeExpiredEvents() {
-        int updated = eventRepository.closeExpiredEvents(LocalDateTime.now());
-        if (updated > 0) icsService.invalidateDoDreamDataByUpdate();
-        log.info("만료 공지 일괄 마감 처리: {}건", updated);
-        return updated;
+    public int deleteExpiredEvents() {
+        int deleted = eventRepository.deleteExpiredEvents(LocalDateTime.now());
+        if (deleted > 0) icsService.invalidateDoDreamDataByUpdate();
+        log.info("만료 공지 일괄 삭제 처리: {}건", deleted);
+        return deleted;
     }
 
     public List<Event> findOpenEvents() {

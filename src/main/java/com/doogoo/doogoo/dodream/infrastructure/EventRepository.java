@@ -23,7 +23,6 @@ public interface EventRepository extends JpaRepository<Event, Long> {
     int markClosedByDodreamIds(@Param("dodreamIds") List<Long> dodreamIds);
 
     @Modifying
-    @Query("UPDATE Event e SET e.status = 'CLOSED', e.updatedAt = CURRENT_TIMESTAMP " +
-           "WHERE e.status = 'OPEN' AND e.applyEnd IS NOT NULL AND e.applyEnd < :now")
-    int closeExpiredEvents(@Param("now") LocalDateTime now);
+    @Query("DELETE FROM Event e WHERE e.operateEnd IS NOT NULL AND e.operateEnd < :now")
+    int deleteExpiredEvents(@Param("now") LocalDateTime now);
 }

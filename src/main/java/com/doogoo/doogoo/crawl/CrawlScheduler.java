@@ -261,7 +261,7 @@ public class CrawlScheduler {
                         null
                 ));
         try {
-            int closedCount = syncService.closeExpiredEvents();
+            int closedCount = syncService.deleteExpiredEvents();
             long latency = System.currentTimeMillis() - start;
 
             JsonLog.info(
