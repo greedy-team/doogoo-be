@@ -395,8 +395,8 @@ public class IcsService {
         String startStr = start.toLocalDate().format(DateTimeFormatter.BASIC_ISO_DATE);
         String endStr = end.toLocalDate().format(DateTimeFormatter.BASIC_ISO_DATE);
 
-        String desc = "신청기간:" + dateFormat(applyStart, applyEnd) + "\\n"
-                + "운영기간:" + dateFormat(operateStart, operateEnd) + "\\n"
+        String desc = "신청기간:" + dateFormat(applyStart, applyEnd) + "\n"
+                + "운영기간:" + dateFormat(operateStart, operateEnd) + "\n"
                 + (event.getDescriptionSummary() != null ? event.getDescriptionSummary() : "");
 
         sb.append("BEGIN:VEVENT\r\n");
@@ -436,7 +436,7 @@ public class IcsService {
 
         title = title.trim();
 
-        String shortened = title.replaceFirst("^(\\[.*?\\]\\s*)?\\d{4}-[12](학기)?\\s*", "").trim();
+        String shortened = title.replaceFirst("^.*?\\d{2,4}-[12](?:학기)?\\s*", "").trim();
 
         return shortened.isBlank() ? title : shortened;
     }
@@ -448,7 +448,12 @@ public class IcsService {
 
     private static String escapeIcsText(String s) {
         if (s == null) return "";
-        return s.replace("\\", "\\\\").replace(";", "\\;").replace(",", "\\,").replace("\n", "\\n");
+        return s.replace("\\", "\\\\")
+                .replace(";", "\\;")
+                .replace(",", "\\,")
+                .replace("\r\n", "\\n")
+                .replace("\n", "\\n")
+                .replace("\r", "\\n");
     }
 
     /**
