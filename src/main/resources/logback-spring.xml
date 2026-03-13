@@ -39,12 +39,9 @@
                 </timestamp>
 
                 <logLevel/>
-                <threadName/>
-                <loggerName/>
                 <message/>
                 <mdc/>
                 <arguments/>
-                <stackTrace/>
             </providers>
         </encoder>
     </appender>
@@ -76,12 +73,9 @@
                 </timestamp>
 
                 <logLevel/>
-                <threadName/>
-                <loggerName/>
                 <message/>
                 <mdc/>
                 <arguments/>
-                <stackTrace/>
             </providers>
         </encoder>
     </appender>
