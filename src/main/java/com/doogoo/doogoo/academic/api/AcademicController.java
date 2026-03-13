@@ -62,10 +62,24 @@ public class AcademicController {
                 subscription.getToken()
         ));
 
-        String baseUrl = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
+        String baseUrl = buildPublicBaseUrl();
         String icsUrl = baseUrl + "/cal/" + subscription.getToken() + ".ics";
         String downloadUrl = icsUrl + "?download=true";
 
         return new IssueIcsResponse(subscription.getToken(), icsUrl, downloadUrl);
+    }
+
+    private String buildPublicBaseUrl() {
+        var builder = ServletUriComponentsBuilder.fromCurrentContextPath();
+        var components = builder.build();
+
+        // nginx가 Host 헤더만 넘기면 외부 공개 포트가 빠질 수 있어 운영 URL에 50018을 보정한다.
+        if (components.getPort() == -1 && components.getHost() != null
+                && !"localhost".equals(components.getHost())
+                && !"127.0.0.1".equals(components.getHost())) {
+            builder.port(50018);
+        }
+
+        return builder.build().toUriString();
     }
 }
