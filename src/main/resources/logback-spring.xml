@@ -40,7 +40,11 @@
 
                 <logLevel/>
                 <mdc/>
-                <arguments/>
+
+                <arguments>
+                    <includeStructuredArguments>true</includeStructuredArguments>
+                    <includeNonStructuredArguments>false</includeNonStructuredArguments>
+                </arguments>
             </providers>
         </encoder>
     </appender>
@@ -73,7 +77,11 @@
 
                 <logLevel/>
                 <mdc/>
-                <arguments/>
+
+                <arguments>
+                    <includeStructuredArguments>true</includeStructuredArguments>
+                    <includeNonStructuredArguments>false</includeNonStructuredArguments>
+                </arguments>
             </providers>
         </encoder>
     </appender>
