@@ -436,7 +436,7 @@ public class IcsService {
 
         title = title.trim();
 
-        String shortened = title.replaceFirst("^.*?\\d{2,4}-[12](?:학기)?\\s*", "").trim();
+        String shortened = title.replaceFirst("^\\[.*?\\]\\s*\\d{2,4}(?:학년도\\s*)?(?:[12](?:학기)?|-[12](?:학기)?)\\s*", "").trim();
 
         return shortened.isBlank() ? title : shortened;
     }
