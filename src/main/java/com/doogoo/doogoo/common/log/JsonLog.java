@@ -3,7 +3,6 @@ package com.doogoo.doogoo.common.log;
 import com.doogoo.doogoo.common.util.Sha256;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.LoggerFactory;
-import org.slf4j.MDC;
 
 
 import java.util.Map;
