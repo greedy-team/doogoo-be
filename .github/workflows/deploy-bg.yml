@@ -25,10 +25,13 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      - name: Build
+      - name: Test
         run: |
           chmod +x ./gradlew
-          ./gradlew clean bootJar -x test
+          ./gradlew test
+
+      - name: Build
+        run: ./gradlew bootJar -x test
 
       - name: Select executable jar
         shell: bash
