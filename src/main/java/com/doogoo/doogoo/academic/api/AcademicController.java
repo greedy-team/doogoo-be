@@ -73,10 +73,16 @@ public class AcademicController {
         var builder = ServletUriComponentsBuilder.fromCurrentContextPath();
         var components = builder.build();
 
-        // nginx가 Host 헤더만 넘기면 외부 공개 포트가 빠질 수 있어 운영 URL에 50018을 보정한다.
-        if (components.getPort() == -1 && components.getHost() != null
+        boolean isExternalHost = components.getHost() != null
                 && !"localhost".equals(components.getHost())
-                && !"127.0.0.1".equals(components.getHost())) {
+                && !"127.0.0.1".equals(components.getHost());
+
+        // 운영 환경에서는 공개 URL을 https://host:50018 로 고정한다.
+        if (isExternalHost) {
+            builder.scheme("https");
+        }
+
+        if (components.getPort() == -1 && isExternalHost) {
             builder.port(50018);
         }
 
