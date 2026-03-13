@@ -5,6 +5,7 @@ import com.doogoo.doogoo.common.error.DoogooException;
 import com.doogoo.doogoo.common.error.ErrorCode;
 import com.doogoo.doogoo.common.error.ErrorResponse;
 
+import com.doogoo.doogoo.common.log.IcsRequestMetrics;
 import com.doogoo.doogoo.common.log.JsonLog;
 import com.doogoo.doogoo.common.log.LogDto;
 import io.swagger.v3.oas.annotations.Operation;
@@ -34,9 +35,11 @@ public class CalendarController {
     private static final Pattern TOKEN_PATTERN = Pattern.compile("^[A-Za-z0-9]{6,64}$");
 
     private final IcsService icsService;
+    private final IcsRequestMetrics icsRequestMetrics;
 
-    public CalendarController(IcsService icsService) {
+    public CalendarController(IcsService icsService, IcsRequestMetrics icsRequestMetrics) {
         this.icsService = icsService;
+        this.icsRequestMetrics = icsRequestMetrics;
     }
 
     @Operation(summary = "ICS 조회", description = "구독 토큰으로 ICS 캘린더 본문 조회. text/alcendar 반환.")
@@ -53,24 +56,47 @@ public class CalendarController {
     ) {
         long startTime = System.currentTimeMillis();
         String userAgent = request.getHeader(HttpHeaders.USER_AGENT);
+        int status = 200;
         JsonLog.info(CalendarController.class, new LogDto.IcsRequestStart("ics.request.start", token, userAgent));
 
-        if (token == null || !TOKEN_PATTERN.matcher(token).matches()) {
-            throw new DoogooException(ErrorCode.INVALID_TOKEN_FORMAT);
+        try {
+            if (token == null || !TOKEN_PATTERN.matcher(token).matches()) {
+                throw new DoogooException(ErrorCode.INVALID_TOKEN_FORMAT);
+            }
+
+            String body = icsService.getIcsByToken(token);
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(TEXT_CALENDAR);
+            if (download) {
+                headers.set(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"schedule.ics\"");
+            }
+
+            return ResponseEntity.ok().headers(headers).body(body);
+        } catch (DoogooException e) {
+            status = e.getErrorCode().getStatus().value();
+            throw e;
+        } catch (IllegalArgumentException e) {
+            status = ErrorCode.INVALID_TOKEN_FORMAT.getStatus().value();
+            throw e;
+        } catch (Exception e) {
+            status = ErrorCode.INTERNAL_SERVER_ERROR.getStatus().value();
+            throw e;
+        } finally {
+            long latencyMs = System.currentTimeMillis() - startTime;
+            IcsRequestMetrics.Snapshot snapshot = icsRequestMetrics.record(latencyMs);
+            JsonLog.info(
+                    CalendarController.class,
+                    new LogDto.IcsRequestComplete(
+                            "ics.request.complete",
+                            token,
+                            userAgent,
+                            status,
+                            latencyMs,
+                            snapshot.avgLatencyMs(),
+                            snapshot.requestCount()
+                    )
+            );
         }
-
-        String body = icsService.getIcsByToken(token);
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(TEXT_CALENDAR);
-        if (download) {
-            headers.set(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"schedule.ics\"");
-        }
-
-        long endTime = System.currentTimeMillis();
-        long latencyMs = endTime - startTime;
-        JsonLog.info(CalendarController.class, new LogDto.IcsRequestComplete("ics.request.complete", token, userAgent, 200, latencyMs));
-
-        return ResponseEntity.ok().headers(headers).body(body);
     }
 }

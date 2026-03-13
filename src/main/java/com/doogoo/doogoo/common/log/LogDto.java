@@ -13,7 +13,9 @@ public class LogDto {
             String token,
             String userAgent,
             Integer status,
-            Long latencyMs
+            Long latencyMs,
+            Double avgLatencyMs,
+            Long requestCount
     ) {
     }
 
