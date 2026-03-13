@@ -201,7 +201,7 @@ jobs:
 
             OK=0
             for i in \$(seq 1 20); do
-              if /usr/bin/curl -fsS http://127.0.0.1:${PUBLIC_PORT}/actuator/health; then
+              if /usr/bin/curl -k -fsS https://127.0.0.1:${PUBLIC_PORT}/actuator/health; then
                 OK=1
                 break
               fi
