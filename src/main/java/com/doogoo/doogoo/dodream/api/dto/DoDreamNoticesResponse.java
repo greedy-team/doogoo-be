@@ -21,6 +21,7 @@ public record DoDreamNoticesResponse(
             LocalDateTime operatingEndAt,
             String location,
             String description,
+            String descriptionSummary,
             String mileage,
             @Schema(description = "키워드 ID 목록. null(빈 배열)이면 기타(k_7)로 해석") List<String> keywordIds,
             String detailUrl

@@ -5,7 +5,6 @@ import com.doogoo.doogoo.academic.domain.AcademicSchedule;
 import com.doogoo.doogoo.academic.infrastructure.AcademicScheduleRepository;
 import com.doogoo.doogoo.common.log.JsonLog;
 import com.doogoo.doogoo.common.log.LogDto;
-import com.doogoo.doogoo.lookup.domain.Keyword;
 import com.doogoo.doogoo.common.error.DoogooException;
 import com.doogoo.doogoo.common.error.ErrorCode;
 import com.doogoo.doogoo.dodream.api.dto.IssueDoDreamIcsRequest;
@@ -39,6 +38,7 @@ public class IcsService {
     private static final ZoneId SEOUL = ZoneId.of("Asia/Seoul");
     private static final DateTimeFormatter ICS_UTC = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss'Z'").withZone(ZoneOffset.UTC);
     private static final DateTimeFormatter ICS_SEOUL = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss").withZone(SEOUL);
+    private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy.MM.dd");
     private static final Pattern SPECIAL = Pattern.compile("([\\\\,;])");
     private static final int DEFAULT_ALARM_MINUTES = 60;
     private static final String KEY_ACADEMIC = "ACADEMIC";
@@ -364,7 +364,7 @@ public class IcsService {
         sb.append("DTSTAMP:").append(now).append("\r\n");
         sb.append("DTSTART;TZID=Asia/Seoul:").append(startStr).append("\r\n");
         sb.append("DTEND;TZID=Asia/Seoul:").append(endStr).append("\r\n");
-        sb.append("SUMMARY:").append(escapeIcsText("[학사] " + (n.getContent() != null ? n.getContent() : ""))).append("\r\n");
+        sb.append("SUMMARY:").append(escapeIcsText((n.getContent() != null ? n.getContent() : ""))).append("\r\n");
         sb.append("DESCRIPTION:").append(escape("학사 공지")).append("\r\n");
         if (subscription.isAlarmEnabled()) {
             sb.append("BEGIN:VALARM\r\n");
@@ -378,31 +378,35 @@ public class IcsService {
 
     private void appendDoDreamEvent(StringBuilder sb, Subscription subscription, Event event, String now) {
         String uid = "doodream-" + event.getDodreamId() + "@doogoo";
-        LocalDateTime start = event.getOperateStart() != null ? event.getOperateStart() : event.getApplyStart();
-        LocalDateTime end = event.getOperateEnd() != null ? event.getOperateEnd() : event.getApplyEnd();
-        if (end == null && start != null) end = start.plusHours(1);
-        String startStr = start != null ? ICS_SEOUL.format(start.atZone(SEOUL)) : now.replace("Z", "");
-        String endStr = end != null ? ICS_SEOUL.format(end.atZone(SEOUL)) : startStr;
         int alarmMin = subscription.getAlarmMinutesBefore() != null ? subscription.getAlarmMinutesBefore() : DEFAULT_ALARM_MINUTES;
 
-        String desc = "두드림 공지";
-        List<String> keywords = event.getKeywordIds();
-        if (keywords != null && !keywords.isEmpty()) {
-            try {
-                Keyword kw = Keyword.fromId(keywords.get(0));
-                desc = "카테고리: " + kw.displayName();
-            } catch (Exception ignored) {
-            }
-        }
+        LocalDateTime operateStart = event.getOperateStart();
+        LocalDateTime operateEnd = event.getOperateEnd();
+
+        LocalDateTime applyStart = event.getApplyStart();
+        LocalDateTime applyEnd = event.getApplyEnd();
+
+        LocalDateTime base = applyStart != null ? applyStart : operateStart;
+        if (base == null) return;
+
+        LocalDateTime start = base.toLocalDate().atStartOfDay();
+        LocalDateTime end = start.plusDays(1);
+
+        String startStr = start.toLocalDate().format(DateTimeFormatter.BASIC_ISO_DATE);
+        String endStr = end.toLocalDate().format(DateTimeFormatter.BASIC_ISO_DATE);
+
+        String desc = "신청기간:" + dateFormat(applyStart, applyEnd) + "\n"
+                + "운영기간:" + dateFormat(operateStart, operateEnd) + "\n"
+                + (event.getDescriptionSummary() != null ? event.getDescriptionSummary() : "");
 
         sb.append("BEGIN:VEVENT\r\n");
         sb.append("UID:").append(uid).append("\r\n");
         sb.append("DTSTAMP:").append(now).append("\r\n");
-        sb.append("DTSTART;TZID=Asia/Seoul:").append(startStr).append("\r\n");
-        sb.append("DTEND;TZID=Asia/Seoul:").append(endStr).append("\r\n");
-        sb.append("SUMMARY:").append(escapeIcsText("[두드림] " + (event.getTitle() != null ? event.getTitle() : ""))).append("\r\n");
+        sb.append("DTSTART;VALUE=DATE:").append(startStr).append("\r\n");
+        sb.append("DTEND;VALUE=DATE:").append(endStr).append("\r\n");
+        sb.append("SUMMARY:").append(escapeIcsText(shortenTitle(event.getTitle()))).append("\r\n");
         sb.append("URL:").append(escape(event.getDodreamUrl() != null ? event.getDodreamUrl() : "")).append("\r\n");
-        sb.append("DESCRIPTION:").append(escape(desc)).append("\r\n");
+        sb.append("DESCRIPTION:").append(escapeIcsText(desc)).append("\r\n");
         if (subscription.isAlarmEnabled()) {
             sb.append("BEGIN:VALARM\r\n");
             sb.append("TRIGGER:-PT").append(alarmMin).append("M\r\n");
@@ -413,6 +417,30 @@ public class IcsService {
         sb.append("END:VEVENT\r\n");
     }
 
+    private String dateFormat(LocalDateTime start, LocalDateTime end) {
+        if (start == null && end == null) {
+            return "추후 공지";
+        }
+        if (start != null && end == null) {
+            return start.format(DATE_FORMAT);
+        }
+
+        if (start == null) {
+            return "~ " + end.format(DATE_FORMAT);
+        }
+        return start.format(DATE_FORMAT) + " ~ " + end.format(DATE_FORMAT);
+    }
+
+    private String shortenTitle(String title) {
+        if (title == null) return "";
+
+        title = title.trim();
+
+        String shortened = title.replaceFirst("^\\[.*?\\]\\s*\\d{2,4}(?:학년도\\s*)?(?:[12](?:학기)?|-[12](?:학기)?)\\s*", "").trim();
+
+        return shortened.isBlank() ? title : shortened;
+    }
+
     private static String escape(String s) {
         if (s == null) return "";
         return SPECIAL.matcher(s).replaceAll("\\\\$1");
@@ -420,7 +448,12 @@ public class IcsService {
 
     private static String escapeIcsText(String s) {
         if (s == null) return "";
-        return s.replace("\\", "\\\\").replace(";", "\\;").replace(",", "\\,").replace("\n", "\\n");
+        return s.replace("\\", "\\\\")
+                .replace(";", "\\;")
+                .replace(",", "\\,")
+                .replace("\r\n", "\\n")
+                .replace("\n", "\\n")
+                .replace("\r", "\\n");
     }
 
     /**
