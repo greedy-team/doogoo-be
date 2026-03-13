@@ -4,7 +4,6 @@
     <property name="logdir" value="${user.home}/logs"/>
     <property name="serviceName" value="doogoo"/>
 
-    <!-- 콘솔용 -->
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
             <level>INFO</level>
@@ -14,15 +13,12 @@
         </encoder>
     </appender>
 
-    <!-- 운영용 -->
     <appender name="PROD_LOG" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>${logdir}/${serviceName}/app.log</file>
         <append>true</append>
-
         <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
             <level>INFO</level>
         </filter>
-
         <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
             <fileNamePattern>${logdir}/${serviceName}/%d{yyyy-MM-dd}.%i.prod.log.gz</fileNamePattern>
             <maxFileSize>30MB</maxFileSize>
@@ -37,10 +33,11 @@
                     <pattern>yyyy-MM-dd HH:mm:ss.SSS</pattern>
                     <timeZone>Asia/Seoul</timeZone>
                 </timestamp>
-
                 <logLevel/>
                 <mdc/>
-
+                <message>
+                    <fieldName>msg</fieldName>
+                </message>
                 <arguments>
                     <includeStructuredArguments>true</includeStructuredArguments>
                     <includeNonStructuredArguments>false</includeNonStructuredArguments>
@@ -49,17 +46,14 @@
         </encoder>
     </appender>
 
-    <!-- 개발용 -->
     <appender name="DEBUG_LOG" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>${logdir}/${serviceName}/debug.log</file>
         <append>true</append>
-
         <filter class="ch.qos.logback.classic.filter.LevelFilter">
             <level>DEBUG</level>
             <onMatch>ACCEPT</onMatch>
             <onMismatch>DENY</onMismatch>
         </filter>
-
         <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
             <fileNamePattern>${logdir}/${serviceName}/%d{yyyy-MM-dd}.%i.debug.log.gz</fileNamePattern>
             <maxFileSize>20MB</maxFileSize>
@@ -74,10 +68,11 @@
                     <pattern>yyyy-MM-dd HH:mm:ss.SSS</pattern>
                     <timeZone>Asia/Seoul</timeZone>
                 </timestamp>
-
                 <logLevel/>
                 <mdc/>
-
+                <message>
+                    <fieldName>msg</fieldName>
+                </message>
                 <arguments>
                     <includeStructuredArguments>true</includeStructuredArguments>
                     <includeNonStructuredArguments>false</includeNonStructuredArguments>
@@ -86,7 +81,6 @@
         </encoder>
     </appender>
 
-    <!-- 전역레벨 설정 -->
     <root level="DEBUG">
         <appender-ref ref="CONSOLE"/>
         <appender-ref ref="PROD_LOG"/>
