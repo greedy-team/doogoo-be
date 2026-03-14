@@ -21,7 +21,13 @@ import java.util.List;
 import java.util.Objects;
 
 @Entity
-@Table(name = "event")
+@Table(
+        name = "event",
+        indexes = {
+                @jakarta.persistence.Index(name = "idx_event_status", columnList = "status"),
+                @jakarta.persistence.Index(name = "idx_event_operate_end", columnList = "operateEnd")
+        }
+)
 public class Event {
 
     @Id

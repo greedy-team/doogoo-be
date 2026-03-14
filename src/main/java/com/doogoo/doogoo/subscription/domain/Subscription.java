@@ -10,7 +10,11 @@ import java.time.Instant;
 @Table(
         name = "subscriptions",
         uniqueConstraints = @UniqueConstraint(name = "uk_subscription_token", columnNames = "token"),
-        indexes = @Index(name = "idx_subscription_filter_hash", columnList = "filterHash")
+        indexes = {
+                @Index(name = "idx_subscription_filter_hash", columnList = "filterHash"),
+                @Index(name = "idx_subscription_enabled_last_accessed", columnList = "enabled, lastAccessedAt"),
+                @Index(name = "idx_subscription_enabled_created", columnList = "enabled, createdAt")
+        }
 )
 public class Subscription {
 
