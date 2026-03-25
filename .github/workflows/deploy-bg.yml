@@ -15,6 +15,7 @@ jobs:
       SSH_HOST: ${{ secrets.NGINX_HOST }}
       SSH_PORT: ${{ secrets.NGINX_PORT }}
       APP_PORT: ${{ secrets.APP_GREEN_PORT }}
+      SSH_OPTIONS: -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
 
     steps:
       - name: Checkout
@@ -53,19 +54,18 @@ jobs:
           mkdir -p ~/.ssh
           printf '%s' "${{ secrets.SSH_PRIVATE_KEY }}" | tr -d '\r' > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
-          ssh-keyscan -p "$SSH_PORT" "$SSH_HOST" >> ~/.ssh/known_hosts
 
       - name: Upload jar
         shell: bash
         run: |
-          scp -i ~/.ssh/id_ed25519 -P "$SSH_PORT" \
+          scp $SSH_OPTIONS -i ~/.ssh/id_ed25519 -P "$SSH_PORT" \
             jar-out/app.jar \
             "$SSH_USER@$SSH_HOST:/tmp/doogoo-app.jar"
 
       - name: Upload scripts
         shell: bash
         run: |
-          scp -i ~/.ssh/id_ed25519 -P "$SSH_PORT" \
+          scp $SSH_OPTIONS -i ~/.ssh/id_ed25519 -P "$SSH_PORT" \
             scripts/deploy-app.sh scripts/restart-app.sh \
             scripts/start-blue.sh scripts/start-green.sh \
             scripts/stop-blue.sh scripts/stop-green.sh \
@@ -77,7 +77,7 @@ jobs:
         run: |
           APP_PORT_VALUE="${APP_PORT:-50010}"
 
-          ssh -i ~/.ssh/id_ed25519 -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" "
+          ssh $SSH_OPTIONS -i ~/.ssh/id_ed25519 -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" "
             set -eu
 
             sudo -n mkdir -p /opt/doogoo/bin /opt/doogoo/green /etc/doogoo
@@ -101,7 +101,7 @@ jobs:
         run: |
           APP_PORT_VALUE="${APP_PORT:-50010}"
 
-          ssh -i ~/.ssh/id_ed25519 -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" "
+          ssh $SSH_OPTIONS -i ~/.ssh/id_ed25519 -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" "
             set -eu
 
             OK=0
