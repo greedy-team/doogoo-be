@@ -2,13 +2,22 @@
 set -e
 
 GREEN_DIR=/opt/doogoo/green
-GREEN_PORT="${DOOGOO_GREEN_PORT:-}"
+ENV_FILE="${DOOGOO_ENV_FILE:-/opt/doogoo/shared/.env}"
 JAR="$GREEN_DIR/app.jar"
 PID_FILE="$GREEN_DIR/app.pid"
 LOG_FILE="$GREEN_DIR/app.log"
 JAVA_OPTS="${JAVA_OPTS:--Xmx384m}"
 
 log() { echo "[start-green] $*"; }
+
+[ -f "$ENV_FILE" ] && set -a && . "$ENV_FILE" && set +a
+
+GREEN_PORT="${DOOGOO_GREEN_PORT:-}"
+
+if [ -z "$GREEN_PORT" ]; then
+  log "missing required env: DOOGOO_GREEN_PORT"
+  exit 1
+fi
 
 if [ ! -f "$JAR" ]; then
   log "missing $JAR"
@@ -28,7 +37,6 @@ install -d -m 755 "$GREEN_DIR"
 cd "$GREEN_DIR" || exit 1
 
 export SPRING_PROFILES_ACTIVE="${SPRING_PROFILES_ACTIVE:-prod}"
-[ -f /opt/doogoo/shared/.env ] && set -a && . /opt/doogoo/shared/.env && set +a
 
 nohup java $JAVA_OPTS -jar "$JAR" --server.port="$GREEN_PORT" >>"$LOG_FILE" 2>&1 &
 echo $! > "$PID_FILE"

@@ -3,16 +3,30 @@ set -e
 
 SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 RESTART_APP="$SCRIPT_DIR/restart-app.sh"
+ENV_FILE="${DOOGOO_ENV_FILE:-/opt/doogoo/shared/.env}"
 
-BLUE_PORT="${DOOGOO_BLUE_PORT:-}"
-GREEN_PORT="${DOOGOO_GREEN_PORT:-}"
 BLUE_DIR=/opt/doogoo/blue
 GREEN_DIR=/opt/doogoo/green
-HEALTH_PATH=/actuator/health
-MAX_WAIT=90
-SLEEP=2
+HEALTH_PATH="${DOOGOO_HEALTH_PATH:-/actuator/health}"
+HEALTH_HOST="${DOOGOO_HEALTH_HOST:-localhost}"
+MAX_WAIT="${DOOGOO_HEALTH_MAX_WAIT:-90}"
+SLEEP="${DOOGOO_HEALTH_SLEEP:-2}"
 
 log() { echo "[deploy-app] $*"; }
+
+[ -f "$ENV_FILE" ] && set -a && . "$ENV_FILE" && set +a
+
+require_var() {
+  VAR_NAME="$1"
+  eval VAR_VALUE=\${$VAR_NAME:-}
+  if [ -z "$VAR_VALUE" ]; then
+    log "missing required env: $VAR_NAME"
+    exit 1
+  fi
+}
+
+require_var DOOGOO_BLUE_PORT
+require_var DOOGOO_GREEN_PORT
 
 JAR_SRC="${1:-}"
 COLOR=$(echo "${2:-}" | tr '[:upper:]' '[:lower:]')
@@ -21,11 +35,11 @@ SKIP_HEALTH="${3:-}"
 case "$COLOR" in
   blue)
     TARGET_DIR=$BLUE_DIR
-    PORT=$BLUE_PORT
+    PORT=$DOOGOO_BLUE_PORT
     ;;
   green)
     TARGET_DIR=$GREEN_DIR
-    PORT=$GREEN_PORT
+    PORT=$DOOGOO_GREEN_PORT
     ;;
   *)
     log "usage: $0 /path/to/app.jar blue|green [skip-health]"

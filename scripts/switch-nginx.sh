@@ -1,16 +1,34 @@
 #!/bin/sh
 set -e
 
-BLUE_HOST="${DOOGOO_BLUE_HOST:-}"
-GREEN_HOST="${DOOGOO_GREEN_HOST:-}"
-BLUE_PORT="${DOOGOO_BLUE_PORT:-}"
-GREEN_PORT="${DOOGOO_GREEN_PORT:-}"
+ENV_FILE="${DOOGOO_ENV_FILE:-/opt/doogoo/shared/.env}"
 
 ACTIVE_FILE=/etc/doogoo/active
 PROXY_FILE=/etc/nginx/doogoo-proxy-active.conf
 PROXY_BAK="${PROXY_FILE}.bak"
 
 log() { echo "[switch-nginx] $*"; }
+
+[ -f "$ENV_FILE" ] && set -a && . "$ENV_FILE" && set +a
+
+BLUE_HOST="${DOOGOO_BLUE_HOST:-}"
+GREEN_HOST="${DOOGOO_GREEN_HOST:-}"
+BLUE_PORT="${DOOGOO_BLUE_PORT:-}"
+GREEN_PORT="${DOOGOO_GREEN_PORT:-}"
+
+require_var() {
+  VAR_NAME="$1"
+  eval VAR_VALUE=\${$VAR_NAME:-}
+  if [ -z "$VAR_VALUE" ]; then
+    log "missing required env: $VAR_NAME"
+    exit 1
+  fi
+}
+
+require_var DOOGOO_BLUE_HOST
+require_var DOOGOO_GREEN_HOST
+require_var DOOGOO_BLUE_PORT
+require_var DOOGOO_GREEN_PORT
 
 restore_proxy_from_backup() {
   if [ -f "$PROXY_BAK" ]; then
