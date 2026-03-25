@@ -6,7 +6,7 @@ BLUE_PORT="${DOOGOO_BLUE_PORT:-}"
 JAR="$BLUE_DIR/app.jar"
 PID_FILE="$BLUE_DIR/app.pid"
 LOG_FILE="$BLUE_DIR/app.log"
-JAVA_OPTS="-Xmx512m"
+JAVA_OPTS="${JAVA_OPTS:--Xmx384m}"
 
 log() { echo "[start-blue] $*"; }
 
@@ -28,7 +28,7 @@ install -d -m 755 "$BLUE_DIR"
 cd "$BLUE_DIR" || exit 1
 
 export SPRING_PROFILES_ACTIVE="${SPRING_PROFILES_ACTIVE:-prod}"
-[ -f /opt/doogoo/app.env ] && . /opt/doogoo/app.env
+[ -f /opt/doogoo/shared/.env ] && set -a && . /opt/doogoo/shared/.env && set +a
 
 nohup java $JAVA_OPTS -jar "$JAR" --server.port="$BLUE_PORT" >>"$LOG_FILE" 2>&1 &
 echo $! > "$PID_FILE"

@@ -6,7 +6,7 @@ GREEN_PORT="${DOOGOO_GREEN_PORT:-}"
 JAR="$GREEN_DIR/app.jar"
 PID_FILE="$GREEN_DIR/app.pid"
 LOG_FILE="$GREEN_DIR/app.log"
-JAVA_OPTS="-Xmx512m"
+JAVA_OPTS="${JAVA_OPTS:--Xmx384m}"
 
 log() { echo "[start-green] $*"; }
 
@@ -28,7 +28,7 @@ install -d -m 755 "$GREEN_DIR"
 cd "$GREEN_DIR" || exit 1
 
 export SPRING_PROFILES_ACTIVE="${SPRING_PROFILES_ACTIVE:-prod}"
-[ -f /opt/doogoo/app.env ] && . /opt/doogoo/app.env
+[ -f /opt/doogoo/shared/.env ] && set -a && . /opt/doogoo/shared/.env && set +a
 
 nohup java $JAVA_OPTS -jar "$JAR" --server.port="$GREEN_PORT" >>"$LOG_FILE" 2>&1 &
 echo $! > "$PID_FILE"
