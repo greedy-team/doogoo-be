@@ -82,10 +82,6 @@ public class AcademicController {
             builder.scheme("https");
         }
 
-        if (components.getPort() == -1 && isExternalHost) {
-            builder.port(50018);
-        }
-
         return builder.build().toUriString();
     }
 }
