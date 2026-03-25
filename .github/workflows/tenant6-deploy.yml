@@ -1,9 +1,7 @@
 name: Deploy to Tenant Server
 
 on:
-  push:
-    branches:
-      - main
+  workflow_dispatch:
 
 jobs:
   build-and-deploy:
@@ -47,10 +45,7 @@ jobs:
           port: ${{ secrets.TENANT_SSH_PORT }}
           script: |
             fuser -k 8080/tcp || true
-            
             mkdir -p /home/${{ secrets.TENANT_USER }}/logs/doogoo
-            
             nohup java -Xmx512m -jar /home/${{ secrets.TENANT_USER }}/app/*.jar > /home/${{ secrets.TENANT_USER }}/logs/doogoo/console.log 2>&1 &
-            
             sleep 5
             ps aux | grep java | grep -v grep || true

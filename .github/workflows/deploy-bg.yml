@@ -4,12 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       target_color:
-        description: "배포 후 active로 둘 색 (blue / green)"
+        description: "Deploy target active color (blue / green)"
         required: false
         default: ""
-  push:
-    branches:
-      - main
 
 jobs:
   build:
@@ -39,7 +36,7 @@ jobs:
           JAR_PATH=$(find build/libs -maxdepth 1 -type f -name "*.jar" ! -name "*-plain.jar" | head -n 1)
 
           if [ -z "$JAR_PATH" ]; then
-            echo "실행 가능한 jar를 찾지 못했습니다."
+            echo "Executable jar not found"
             exit 1
           fi
 
@@ -59,16 +56,12 @@ jobs:
 
     env:
       SSH_USER: ${{ secrets.SSH_USER }}
-
       NGINX_HOST: ${{ secrets.NGINX_HOST }}
       NGINX_PORT: ${{ secrets.NGINX_PORT }}
-
       APP_BLUE_HOST: ${{ secrets.APP_BLUE_HOST }}
       APP_BLUE_PORT: ${{ secrets.APP_BLUE_PORT }}
-
       APP_GREEN_HOST: ${{ secrets.APP_GREEN_HOST }}
       APP_GREEN_PORT: ${{ secrets.APP_GREEN_PORT }}
-
       DOOGOO_PUBLIC_PORT: ${{ secrets.DOOGOO_PUBLIC_PORT }}
 
     steps:
@@ -100,7 +93,7 @@ jobs:
 
           if [ -n "$INPUT_COLOR" ]; then
             if [ "$INPUT_COLOR" != "blue" ] && [ "$INPUT_COLOR" != "green" ]; then
-              echo "target_color는 blue 또는 green 이어야 합니다."
+              echo "target_color must be blue or green"
               exit 1
             fi
             TARGET_COLOR="$INPUT_COLOR"
@@ -113,7 +106,7 @@ jobs:
             elif [ "$CURRENT_ACTIVE" = "green" ]; then
               TARGET_COLOR="blue"
             else
-              echo "/etc/doogoo/active 값이 올바르지 않습니다: $CURRENT_ACTIVE"
+              echo "Unexpected /etc/doogoo/active value: $CURRENT_ACTIVE"
               exit 1
             fi
           fi
@@ -179,7 +172,7 @@ jobs:
             done
 
             if [ "$OK" -ne 1 ]; then
-              echo "앱 서버 health check 실패"
+              echo "App server health check failed"
               exit 1
             fi
             '
@@ -210,7 +203,7 @@ jobs:
             done
 
             if [ \"\$OK\" -ne 1 ]; then
-              echo 'nginx 전환 후 health check 실패'
+              echo 'nginx public health check failed'
               exit 1
             fi
           "
