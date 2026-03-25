@@ -1,16 +1,20 @@
-name: Deploy Blue-Green (split servers)
+name: Deploy Oracle Single Server
 
 on:
+  push:
+    branches:
+      - main
   workflow_dispatch:
-    inputs:
-      target_color:
-        description: "Deploy target active color (blue / green)"
-        required: false
-        default: ""
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
+
+    env:
+      SSH_USER: ${{ secrets.SSH_USER }}
+      SSH_HOST: ${{ secrets.NGINX_HOST }}
+      SSH_PORT: ${{ secrets.NGINX_PORT }}
+      APP_PORT: ${{ secrets.APP_GREEN_PORT }}
 
     steps:
       - name: Checkout
@@ -22,12 +26,12 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      - name: Test
+      - name: Run tests
         run: |
           chmod +x ./gradlew
           ./gradlew test
 
-      - name: Build
+      - name: Build app
         run: ./gradlew bootJar -x test
 
       - name: Select executable jar
@@ -43,175 +47,93 @@ jobs:
           mkdir -p jar-out
           cp "$JAR_PATH" jar-out/app.jar
 
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: app-jar
-          path: jar-out/app.jar
-          retention-days: 2
-
-  deploy-app-then-switch:
-    needs: build
-    runs-on: ubuntu-latest
-
-    env:
-      SSH_USER: ${{ secrets.SSH_USER }}
-      NGINX_HOST: ${{ secrets.NGINX_HOST }}
-      NGINX_PORT: ${{ secrets.NGINX_PORT }}
-      APP_BLUE_HOST: ${{ secrets.APP_BLUE_HOST }}
-      APP_BLUE_PORT: ${{ secrets.APP_BLUE_PORT }}
-      APP_GREEN_HOST: ${{ secrets.APP_GREEN_HOST }}
-      APP_GREEN_PORT: ${{ secrets.APP_GREEN_PORT }}
-      DOOGOO_PUBLIC_PORT: ${{ secrets.DOOGOO_PUBLIC_PORT }}
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Download jar
-        uses: actions/download-artifact@v4
-        with:
-          name: app-jar
-          path: jar-out
-
       - name: Prepare SSH
         shell: bash
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_PRIVATE_KEY }}" | tr -d '\r' > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -p "$SSH_PORT" "$SSH_HOST" >> ~/.ssh/known_hosts
 
-          ssh-keyscan -p "$NGINX_PORT" "$NGINX_HOST" >> ~/.ssh/known_hosts
-          ssh-keyscan -p "$APP_BLUE_PORT" "$APP_BLUE_HOST" >> ~/.ssh/known_hosts
-          ssh-keyscan -p "$APP_GREEN_PORT" "$APP_GREEN_HOST" >> ~/.ssh/known_hosts
-
-      - name: Decide target color
-        id: decide
+      - name: Upload jar
         shell: bash
         run: |
-          INPUT_COLOR="${{ github.event.inputs.target_color }}"
+          scp -i ~/.ssh/id_ed25519 -P "$SSH_PORT" \
+            jar-out/app.jar \
+            "$SSH_USER@$SSH_HOST:/tmp/doogoo-app.jar"
 
-          if [ -n "$INPUT_COLOR" ]; then
-            if [ "$INPUT_COLOR" != "blue" ] && [ "$INPUT_COLOR" != "green" ]; then
-              echo "target_color must be blue or green"
-              exit 1
-            fi
-            TARGET_COLOR="$INPUT_COLOR"
-            CURRENT_ACTIVE="manual"
-          else
-            CURRENT_ACTIVE=$(ssh -i ~/.ssh/id_ed25519 -p "$NGINX_PORT" "$SSH_USER@$NGINX_HOST" "cat /etc/doogoo/active 2>/dev/null || echo blue" | tr -d '\r\n')
-
-            if [ "$CURRENT_ACTIVE" = "blue" ]; then
-              TARGET_COLOR="green"
-            elif [ "$CURRENT_ACTIVE" = "green" ]; then
-              TARGET_COLOR="blue"
-            else
-              echo "Unexpected /etc/doogoo/active value: $CURRENT_ACTIVE"
-              exit 1
-            fi
-          fi
-
-          if [ "$TARGET_COLOR" = "blue" ]; then
-            TARGET_HOST="$APP_BLUE_HOST"
-            TARGET_PORT="$APP_BLUE_PORT"
-            TARGET_HEALTH_PORT="$APP_BLUE_PORT"
-          else
-            TARGET_HOST="$APP_GREEN_HOST"
-            TARGET_PORT="$APP_GREEN_PORT"
-            TARGET_HEALTH_PORT="$APP_GREEN_PORT"
-          fi
-
-          echo "current_active=$CURRENT_ACTIVE" >> "$GITHUB_OUTPUT"
-          echo "target_color=$TARGET_COLOR" >> "$GITHUB_OUTPUT"
-          echo "target_host=$TARGET_HOST" >> "$GITHUB_OUTPUT"
-          echo "target_port=$TARGET_PORT" >> "$GITHUB_OUTPUT"
-          echo "target_health_port=$TARGET_HEALTH_PORT" >> "$GITHUB_OUTPUT"
-
-      - name: Copy deploy scripts to target app server
+      - name: Upload scripts
         shell: bash
         run: |
-          scp -i ~/.ssh/id_ed25519 -P "${{ steps.decide.outputs.target_port }}" \
+          scp -i ~/.ssh/id_ed25519 -P "$SSH_PORT" \
             scripts/deploy-app.sh scripts/restart-app.sh \
             scripts/start-blue.sh scripts/start-green.sh \
             scripts/stop-blue.sh scripts/stop-green.sh \
-            "$SSH_USER@${{ steps.decide.outputs.target_host }}:/opt/doogoo/"
-          ssh -i ~/.ssh/id_ed25519 -p "${{ steps.decide.outputs.target_port }}" \
-            "$SSH_USER@${{ steps.decide.outputs.target_host }}" \
-            "sed -i 's/\\r\$//' /opt/doogoo/deploy-app.sh /opt/doogoo/restart-app.sh /opt/doogoo/start-blue.sh /opt/doogoo/start-green.sh /opt/doogoo/stop-blue.sh /opt/doogoo/stop-green.sh && chmod +x /opt/doogoo/*.sh"
+            scripts/switch-nginx.sh \
+            "$SSH_USER@$SSH_HOST:/tmp/"
 
-      - name: Copy jar to target app server
+      - name: Restart app on server
         shell: bash
         run: |
-          scp -i ~/.ssh/id_ed25519 -P "${{ steps.decide.outputs.target_port }}" \
-            jar-out/app.jar \
-            "$SSH_USER@${{ steps.decide.outputs.target_host }}:/opt/doogoo/app.jar"
+          APP_PORT_VALUE="${APP_PORT:-50010}"
 
-      - name: Deploy on target app server
+          ssh -i ~/.ssh/id_ed25519 -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" "
+            set -eu
+
+            sudo mkdir -p /opt/doogoo/bin /opt/doogoo/green /etc/doogoo
+            sudo cp /tmp/deploy-app.sh /tmp/restart-app.sh /tmp/start-blue.sh /tmp/start-green.sh /tmp/stop-blue.sh /tmp/stop-green.sh /tmp/switch-nginx.sh /opt/doogoo/bin/
+            sudo sed -i 's/\\r\$//' /opt/doogoo/bin/*.sh
+            sudo chmod +x /opt/doogoo/bin/*.sh
+
+            cp /tmp/doogoo-app.jar /opt/doogoo/green/app.jar
+
+            DOOGOO_GREEN_PORT=${APP_PORT_VALUE} /opt/doogoo/bin/stop-green.sh || true
+            DOOGOO_GREEN_PORT=${APP_PORT_VALUE} DOOGOO_ENV_FILE=/opt/doogoo/shared/.env /opt/doogoo/bin/start-green.sh
+
+            echo 'proxy_pass http://127.0.0.1:${APP_PORT_VALUE};' | sudo tee /etc/nginx/doogoo-proxy-active.conf >/dev/null
+            echo green | sudo tee /etc/doogoo/active >/dev/null
+            sudo nginx -t
+            sudo systemctl reload nginx
+          "
+
+      - name: Check app health
         shell: bash
         run: |
-          ssh -i ~/.ssh/id_ed25519 -p "${{ steps.decide.outputs.target_port }}" \
-            "$SSH_USER@${{ steps.decide.outputs.target_host }}" \
-            "cd /opt/doogoo && chmod +x ./deploy-app.sh && ./deploy-app.sh app.jar ${{ steps.decide.outputs.target_color }} skip-health"
+          APP_PORT_VALUE="${APP_PORT:-50010}"
 
-      - name: Health check on target app server
-        shell: bash
-        run: |
-          ssh -i ~/.ssh/id_ed25519 -p "${{ steps.decide.outputs.target_port }}" \
-            "$SSH_USER@${{ steps.decide.outputs.target_host }}" \
-            '
+          ssh -i ~/.ssh/id_ed25519 -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" "
             set -eu
 
             OK=0
-            for i in $(seq 1 30); do
-              if /usr/bin/curl -fsS "http://127.0.0.1:${{ steps.decide.outputs.target_health_port }}/actuator/health"; then
+            for i in \$(seq 1 45); do
+              if /usr/bin/curl -fsS http://127.0.0.1:${APP_PORT_VALUE}/actuator/health; then
                 OK=1
                 break
               fi
-              echo "health retry: $i"
-              sleep 2
-            done
-
-            if [ "$OK" -ne 1 ]; then
-              echo "App server health check failed"
-              exit 1
-            fi
-            '
-
-      - name: Switch nginx
-        shell: bash
-        run: |
-          ssh -i ~/.ssh/id_ed25519 -p "$NGINX_PORT" \
-            "$SSH_USER@$NGINX_HOST" \
-            "sudo -n /usr/local/bin/switch-nginx.sh ${{ steps.decide.outputs.target_color }}"
-
-      - name: Public health check through nginx
-        shell: bash
-        run: |
-          PUBLIC_PORT="${DOOGOO_PUBLIC_PORT:-50018}"
-
-          ssh -i ~/.ssh/id_ed25519 -p "$NGINX_PORT" "$SSH_USER@$NGINX_HOST" "
-            set -eu
-
-            OK=0
-            for i in \$(seq 1 20); do
-              if /usr/bin/curl -k -fsS https://127.0.0.1:${PUBLIC_PORT}/actuator/health; then
-                OK=1
-                break
-              fi
-              echo \"public health retry: \$i\"
+              echo \"health retry: \$i\"
               sleep 2
             done
 
             if [ \"\$OK\" -ne 1 ]; then
-              echo 'nginx public health check failed'
+              echo 'App health check failed'
               exit 1
             fi
           "
 
-      - name: Summary
+      - name: Check public health
         shell: bash
         run: |
-          echo "current_active = ${{ steps.decide.outputs.current_active }}"
-          echo "target_color   = ${{ steps.decide.outputs.target_color }}"
-          echo "target_host    = ${{ steps.decide.outputs.target_host }}"
-          echo "target_port    = ${{ steps.decide.outputs.target_port }}"
+          OK=0
+          for i in $(seq 1 20); do
+            if curl -k -fsS https://sejongdoogoo-api.com/actuator/health; then
+              OK=1
+              break
+            fi
+            echo "public health retry: $i"
+            sleep 2
+          done
+
+          if [ "$OK" -ne 1 ]; then
+            echo "Public health check failed"
+            exit 1
+          fi
