@@ -432,13 +432,29 @@ public class IcsService {
     }
 
     private String shortenTitle(String title) {
-        if (title == null) return "";
+        if (title == null || title.isBlank()) return "";
 
-        title = title.trim();
+        String result = title.trim();
 
-        String shortened = title.replaceFirst("^\\[.*?\\]\\s*\\d{2,4}(?:학년도\\s*)?(?:[12](?:학기)?|-[12](?:학기)?)\\s*", "").trim();
+        result = result.replaceFirst("^\\[.*?\\]\\s*", "");
 
-        return shortened.isBlank() ? title : shortened;
+        result = result.replaceFirst("^.*?20\\d{2}(?:학년도|년)?\\s*[-]?\\s*", "");
+
+        String[] target = {
+                "1학기", "2학기", "1 학기", "2 학기",
+                "1", "2"
+        };
+
+        for (String str : target) {
+            if (result.startsWith(str)) {
+                result = result.substring(str.length()).trim();
+                break;
+            }
+        }
+
+        result = result.trim();
+
+        return result.isEmpty() ? title : result;
     }
 
     private static String escape(String s) {
