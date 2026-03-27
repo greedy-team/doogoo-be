@@ -81,10 +81,16 @@
     </appender>
 
     <!-- 전역레벨 설정 -->
-    <root level="DEBUG">
+    <root level="INFO">
         <appender-ref ref="CONSOLE"/>
         <appender-ref ref="PROD_LOG"/>
         <appender-ref ref="DEBUG_LOG"/>
     </root>
+
+    <logger name="com.doogoo" level="DEBUG" additivity="false">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="PROD_LOG"/>
+        <appender-ref ref="DEBUG_LOG"/>
+    </logger>
 
 </configuration>
