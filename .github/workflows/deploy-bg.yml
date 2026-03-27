@@ -105,7 +105,7 @@ jobs:
             set -eu
 
             OK=0
-            for i in \$(seq 1 45); do
+            for i in \$(seq 1 80); do
               if /usr/bin/curl -fsS http://127.0.0.1:${APP_PORT_VALUE}/actuator/health; then
                 OK=1
                 break
