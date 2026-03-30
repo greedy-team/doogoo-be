@@ -25,7 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class CalendarControllerTest {
 
     private static final String ACADEMIC_ICS_BODY =
-            "{\"selectedGradeId\":1}";
+            "{\"selectedGradeIds\":[\"1\"]}";
 
     @LocalServerPort
     private int port;

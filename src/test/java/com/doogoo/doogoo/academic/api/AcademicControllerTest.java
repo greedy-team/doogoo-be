@@ -21,7 +21,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class AcademicControllerTest {
 
     private static final String REQUEST_JSON =
-            "{\"selectedGradeId\":1}";
+            "{\"selectedGradeIds\":[\"1\"]}";
 
     @Autowired
     private WebApplicationContext webApplicationContext;

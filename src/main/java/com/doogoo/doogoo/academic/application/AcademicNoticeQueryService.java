@@ -28,7 +28,7 @@ public class AcademicNoticeQueryService {
                 n.getContent(),
                 n.getStartDate().atStartOfDay(),
                 n.getEndDate().atTime(23, 59),
-                n.getGradeId() == null ? AcademicSchedule.ALL_GRADE_ID : n.getGradeId()
+                List.of(n.getGradeId() == null ? AcademicSchedule.ALL_GRADE_ID : n.getGradeId())
         );
     }
 }

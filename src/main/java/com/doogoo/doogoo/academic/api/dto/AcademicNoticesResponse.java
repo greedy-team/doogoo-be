@@ -1,5 +1,6 @@
 package com.doogoo.doogoo.academic.api.dto;
 
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDateTime;
@@ -15,11 +16,14 @@ public record AcademicNoticesResponse(
             String title,
             LocalDateTime startAt,
             LocalDateTime endAt,
-            @Schema(
-                    description = "대상 학년 ID. all=전체 학년, 1~4=해당 학년",
-                    allowableValues = {"all", "1", "2", "3", "4"},
-                    example = "all",
-                    nullable = false
-            ) String gradeId
+            @ArraySchema(
+                    arraySchema = @Schema(description = "대상 학년 ID 목록"),
+                    schema = @Schema(
+                            description = "all=전체 학년, 1~4=해당 학년",
+                            allowableValues = {"all", "1", "2", "3", "4"},
+                            example = "all",
+                            nullable = false
+                    )
+            ) List<String> gradeIds
     ) {}
 }
