@@ -20,6 +20,8 @@ import java.time.LocalDateTime;
 )
 public class AcademicSchedule {
 
+    public static final String ALL_GRADE_ID = "all";
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -32,7 +34,7 @@ public class AcademicSchedule {
     @Column(nullable = false)
     private String content;
 
-    private String gradeId;  // null = 전체, "1"~"4" = 해당 학년만
+    private String gradeId;  // "all" = 전체, "1"~"4" = 해당 학년만
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -56,8 +58,12 @@ public class AcademicSchedule {
         s.startDate = startDate;
         s.endDate = endDate;
         s.content = content;
-        s.gradeId = gradeId;
+        s.gradeId = normalizeGradeId(gradeId);
         return s;
+    }
+
+    private static String normalizeGradeId(String gradeId) {
+        return gradeId == null ? ALL_GRADE_ID : gradeId;
     }
 
     public Long getId() { return id; }

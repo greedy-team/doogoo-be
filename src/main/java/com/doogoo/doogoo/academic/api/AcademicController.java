@@ -16,6 +16,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -49,7 +50,7 @@ public class AcademicController {
             @ApiResponse(responseCode = "400", description = "잘못된 요청", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @PostMapping("/ics")
-    public IssueIcsResponse issueIcs(@RequestBody IssueAcademicIcsRequest request) {
+    public IssueIcsResponse issueIcs(@Valid @RequestBody IssueAcademicIcsRequest request) {
         Subscription subscription = subscriptionIssueService.issue(
                 SourceType.ACADEMIC,
                 request,

@@ -321,10 +321,11 @@ public class IcsService {
     }
 
     private boolean passesAcademicFilter(AcademicSchedule schedule, IssueAcademicIcsRequest filter) {
-        if (filter == null || filter.selectedGradeId() == null) return true;
+        if (filter == null || filter.selectedGradeId() == null || AcademicSchedule.ALL_GRADE_ID.equals(filter.selectedGradeId())) return true;
         String gradeId = schedule.getGradeId();
+        if (AcademicSchedule.ALL_GRADE_ID.equals(gradeId)) return true;
         if (gradeId == null) return true; // 전체 학년 일정은 항상 포함
-        return gradeId.equals(String.valueOf(filter.selectedGradeId()));
+        return gradeId.equals(filter.selectedGradeId());
     }
 
     private boolean passesDoDreamFilter(Event event, IssueDoDreamIcsRequest filter) {

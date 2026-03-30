@@ -28,7 +28,7 @@ public class DoDreamNoticeQueryService {
         return new DoDreamNoticesResponse.NoticeItem(
                 "dodream-" + event.getDodreamId(),
                 event.getTitle(),
-                event.getDepartmentId(),
+                event.getDepartmentId() == null ? "all" : event.getDepartmentId(),
                 event.getDepartment(),
                 event.getApplyStart(),
                 event.getApplyEnd(),

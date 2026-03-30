@@ -7,5 +7,5 @@ public record AcademicScheduleDto(
         LocalDate startDate,
         LocalDate endDate,
         String content,
-        String gradeId   // null = 전체, "1"~"4" = 해당 학년만
+        String gradeId   // "all" = 전체, "1"~"4" = 해당 학년만
 ) {}

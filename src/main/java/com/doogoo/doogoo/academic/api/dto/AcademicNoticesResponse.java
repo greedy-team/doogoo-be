@@ -9,15 +9,17 @@ import java.util.List;
 public record AcademicNoticesResponse(
         @Schema(description = "공지 목록") List<NoticeItem> notices) {
 
-    @Schema(description = "학사 공지 한 건")
+    @Schema(description = "학사 공지 개별 항목")
     public record NoticeItem(
             String noticeId,
             String title,
             LocalDateTime startAt,
             LocalDateTime endAt,
             @Schema(
-            description = "대상 학년 ID. null=전체 학년, 1~4=해당 학년",
-            example = "2"
-    ) String gradeId
+                    description = "대상 학년 ID. all=전체 학년, 1~4=해당 학년",
+                    allowableValues = {"all", "1", "2", "3", "4"},
+                    example = "all",
+                    nullable = false
+            ) String gradeId
     ) {}
 }

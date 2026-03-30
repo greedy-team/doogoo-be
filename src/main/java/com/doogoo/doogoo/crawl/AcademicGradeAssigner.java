@@ -1,5 +1,6 @@
 package com.doogoo.doogoo.crawl;
 
+import com.doogoo.doogoo.academic.domain.AcademicSchedule;
 import com.doogoo.doogoo.academic.domain.AcademicScheduleDto;
 import org.springframework.stereotype.Component;
 
@@ -22,7 +23,7 @@ public class AcademicGradeAssigner {
     public List<AcademicScheduleDto> assign(int year, LocalDate startDate, LocalDate endDate, String content) {
         if (content.contains("학기 수강신청")) {
             if (content.contains("계절")) {
-                return List.of(new AcademicScheduleDto(year, startDate, endDate, content, null));
+                return List.of(new AcademicScheduleDto(year, startDate, endDate, content, AcademicSchedule.ALL_GRADE_ID));
             }
             return splitCourseRegistration(year, startDate, endDate, content);
         }
@@ -32,7 +33,7 @@ public class AcademicGradeAssigner {
         if (content.contains("입학식") || content.contains("전공배정")) {
             return List.of(new AcademicScheduleDto(year, startDate, endDate, content, "1"));
         }
-        return List.of(new AcademicScheduleDto(year, startDate, endDate, content, null));
+        return List.of(new AcademicScheduleDto(year, startDate, endDate, content, AcademicSchedule.ALL_GRADE_ID));
     }
 
     private List<AcademicScheduleDto> splitCourseRegistration(int year, LocalDate startDate, LocalDate endDate, String content) {
@@ -48,7 +49,7 @@ public class AcademicGradeAssigner {
 
         while (!current.isAfter(endDate)) {
             if (businessDayCalculator.isBusinessDay(current)) {
-                String gradeId = gradeIndex < gradeOrder.length ? gradeOrder[gradeIndex] : null;
+                String gradeId = gradeIndex < gradeOrder.length ? gradeOrder[gradeIndex] : AcademicSchedule.ALL_GRADE_ID;
                 result.add(new AcademicScheduleDto(year, current, current, content, gradeId));
                 gradeIndex++;
             }
