@@ -72,7 +72,7 @@ class IcsCacheTest {
     // ─── 헬퍼 ─────────────────────────────────────────────────────────────────
 
     private Subscription academicSub(String token, String filterHash) {
-        return new Subscription(token, SourceType.ACADEMIC, "{\"selectedGradeId\":1}", false, null, filterHash);
+        return new Subscription(token, SourceType.ACADEMIC, "{\"selectedGradeIds\":[\"1\"]}", false, null, filterHash);
     }
 
     private Subscription doDreamSub(String token, String filterHash) {

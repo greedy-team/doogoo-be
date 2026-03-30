@@ -9,11 +9,15 @@ import java.util.List;
 public record DoDreamNoticesResponse(
         @Schema(description = "공지 목록") List<NoticeItem> notices) {
 
-    @Schema(description = "두드림 공지 한 건")
+    @Schema(description = "두드림 공지 개별 항목")
     public record NoticeItem(
             String noticeId,
             String title,
-            @Schema(description = "학과 ID. null 또는 \"all\"이면 자유전공학부") String departmentId,
+            @Schema(
+                    description = "학과 ID. all=전체 공지/자유전공학부, 그 외=해당 학과 ID",
+                    example = "all",
+                    nullable = false
+            ) String departmentId,
             String departmentName,
             LocalDateTime applicationStartAt,
             LocalDateTime applicationEndAt,

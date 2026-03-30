@@ -21,7 +21,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class AcademicControllerTest {
 
     private static final String REQUEST_JSON =
-            "{\"selectedGradeId\":1}";
+            "{\"selectedGradeIds\":[\"1\"]}";
 
     @Autowired
     private WebApplicationContext webApplicationContext;
@@ -42,5 +42,15 @@ class AcademicControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.token").exists())
                 .andExpect(jsonPath("$.icsUrl").value(containsString("/cal/")));
+    }
+
+    @Test
+    @DisplayName("POST /api/academic/notices/filter -> 200, response에 notices 존재")
+    void filter_notices_returns_200_with_notices() throws Exception {
+        mockMvc.perform(post("/api/academic/notices/filter")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(REQUEST_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.notices").isArray());
     }
 }

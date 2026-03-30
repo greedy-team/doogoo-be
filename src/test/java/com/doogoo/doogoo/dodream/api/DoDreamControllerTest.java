@@ -43,4 +43,14 @@ class DoDreamControllerTest {
                 .andExpect(jsonPath("$.token").exists())
                 .andExpect(jsonPath("$.icsUrl").value(containsString("/cal/")));
     }
+
+    @Test
+    @DisplayName("POST /api/dodream/notices/filter -> 200, response에 notices 존재")
+    void filter_notices_returns_200_with_notices() throws Exception {
+        mockMvc.perform(post("/api/dodream/notices/filter")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(REQUEST_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.notices").isArray());
+    }
 }
