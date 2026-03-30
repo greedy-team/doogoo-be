@@ -1,6 +1,7 @@
 package com.doogoo.doogoo.calendar.application;
 
 import com.doogoo.doogoo.academic.api.dto.IssueAcademicIcsRequest;
+import com.doogoo.doogoo.academic.api.dto.AcademicNoticesResponse;
 import com.doogoo.doogoo.academic.domain.AcademicSchedule;
 import com.doogoo.doogoo.academic.infrastructure.AcademicScheduleRepository;
 import com.doogoo.doogoo.common.log.JsonLog;
@@ -8,6 +9,7 @@ import com.doogoo.doogoo.common.log.LogDto;
 import com.doogoo.doogoo.common.error.DoogooException;
 import com.doogoo.doogoo.common.error.ErrorCode;
 import com.doogoo.doogoo.dodream.api.dto.IssueDoDreamIcsRequest;
+import com.doogoo.doogoo.dodream.api.dto.DoDreamNoticesResponse;
 import com.doogoo.doogoo.dodream.domain.Event;
 import com.doogoo.doogoo.dodream.domain.EventStatus;
 import com.doogoo.doogoo.dodream.infrastructure.EventRepository;
@@ -151,6 +153,32 @@ public class IcsService {
                 noticeCacheSize,
                 removed
         ));
+    }
+
+    public AcademicNoticesResponse previewAcademicNotices(IssueAcademicIcsRequest filter) {
+        List<AcademicSchedule> all = getAcademicSchedules();
+        List<AcademicSchedule> filtered = all.stream().filter(n -> passesAcademicFilter(n, filter)).toList();
+        if (filtered.isEmpty()) {
+            filtered = all;
+        }
+
+        List<AcademicNoticesResponse.NoticeItem> items = filtered.stream()
+                .map(this::toAcademicNoticeItem)
+                .toList();
+        return new AcademicNoticesResponse(items);
+    }
+
+    public DoDreamNoticesResponse previewDoDreamNotices(IssueDoDreamIcsRequest filter) {
+        List<Event> all = getDoDreamEvents();
+        List<Event> filtered = all.stream().filter(n -> passesDoDreamFilter(n, filter)).toList();
+        if (filtered.isEmpty()) {
+            filtered = all;
+        }
+
+        List<DoDreamNoticesResponse.NoticeItem> items = filtered.stream()
+                .map(this::toDoDreamNoticeItem)
+                .toList();
+        return new DoDreamNoticesResponse(items);
     }
 
     private int invalidateIcsCacheBySourceType(String type) {
@@ -351,6 +379,35 @@ public class IcsService {
             if (!match) return false;
         }
         return true;
+    }
+
+    private AcademicNoticesResponse.NoticeItem toAcademicNoticeItem(AcademicSchedule n) {
+        return new AcademicNoticesResponse.NoticeItem(
+                String.valueOf(n.getId()),
+                n.getContent(),
+                n.getStartDate().atStartOfDay(),
+                n.getEndDate().atTime(23, 59),
+                List.of(n.getGradeId() == null ? AcademicSchedule.ALL_GRADE_ID : n.getGradeId())
+        );
+    }
+
+    private DoDreamNoticesResponse.NoticeItem toDoDreamNoticeItem(Event event) {
+        return new DoDreamNoticesResponse.NoticeItem(
+                "dodream-" + event.getDodreamId(),
+                event.getTitle(),
+                event.getDepartmentId() == null ? "all" : event.getDepartmentId(),
+                event.getDepartment(),
+                event.getApplyStart(),
+                event.getApplyEnd(),
+                event.getOperateStart(),
+                event.getOperateEnd(),
+                event.getLocation(),
+                event.getDescription(),
+                event.getDescriptionSummary(),
+                event.getMileage(),
+                event.getKeywordIds(),
+                event.getDodreamUrl()
+        );
     }
 
     private void appendAcademicEvent(StringBuilder sb, Subscription subscription, AcademicSchedule n, String now) {

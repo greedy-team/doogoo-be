@@ -3,6 +3,7 @@ package com.doogoo.doogoo.academic.api;
 import com.doogoo.doogoo.academic.api.dto.AcademicNoticesResponse;
 import com.doogoo.doogoo.academic.api.dto.IssueAcademicIcsRequest;
 import com.doogoo.doogoo.academic.application.AcademicNoticeQueryService;
+import com.doogoo.doogoo.calendar.application.IcsService;
 import com.doogoo.doogoo.common.error.ErrorResponse;
 import com.doogoo.doogoo.common.log.JsonLog;
 import com.doogoo.doogoo.common.log.LogDto;
@@ -31,10 +32,12 @@ public class AcademicController {
 
     private final SubscriptionIssueService subscriptionIssueService;
     private final AcademicNoticeQueryService academicNoticeQueryService;
+    private final IcsService icsService;
 
-    public AcademicController(SubscriptionIssueService subscriptionIssueService, AcademicNoticeQueryService academicNoticeQueryService) {
+    public AcademicController(SubscriptionIssueService subscriptionIssueService, AcademicNoticeQueryService academicNoticeQueryService, IcsService icsService) {
         this.subscriptionIssueService = subscriptionIssueService;
         this.academicNoticeQueryService = academicNoticeQueryService;
+        this.icsService = icsService;
     }
 
     @Operation(summary = "학사 공지 목록")
@@ -42,6 +45,16 @@ public class AcademicController {
     @GetMapping("/notices")
     public AcademicNoticesResponse getNotices() {
         return academicNoticeQueryService.getNotices();
+    }
+
+    @Operation(summary = "학사 공지 필터 미리보기", description = "ICS 발급 전에 실제 달력에 포함될 학사 공지 목록을 반환")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "성공"),
+            @ApiResponse(responseCode = "400", description = "잘못된 요청", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    @PostMapping("/notices/filter")
+    public AcademicNoticesResponse previewFilteredNotices(@Valid @RequestBody IssueAcademicIcsRequest request) {
+        return icsService.previewAcademicNotices(request);
     }
 
     @Operation(summary = "학사 ICS 발급", description = "구독 토큰·icsUrl·downloadUrl 반환")

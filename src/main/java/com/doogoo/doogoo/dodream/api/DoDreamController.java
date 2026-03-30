@@ -3,6 +3,7 @@ package com.doogoo.doogoo.dodream.api;
 import com.doogoo.doogoo.common.error.ErrorResponse;
 import com.doogoo.doogoo.common.log.JsonLog;
 import com.doogoo.doogoo.common.log.LogDto;
+import com.doogoo.doogoo.calendar.application.IcsService;
 import com.doogoo.doogoo.dodream.api.dto.DoDreamNoticesResponse;
 import com.doogoo.doogoo.dodream.api.dto.IssueDoDreamIcsRequest;
 import com.doogoo.doogoo.dodream.api.dto.IssueIcsResponse;
@@ -30,10 +31,12 @@ public class DoDreamController {
 
     private final SubscriptionIssueService subscriptionIssueService;
     private final DoDreamNoticeQueryService doDreamNoticeQueryService;
+    private final IcsService icsService;
 
-    public DoDreamController(SubscriptionIssueService subscriptionIssueService, DoDreamNoticeQueryService doDreamNoticeQueryService) {
+    public DoDreamController(SubscriptionIssueService subscriptionIssueService, DoDreamNoticeQueryService doDreamNoticeQueryService, IcsService icsService) {
         this.subscriptionIssueService = subscriptionIssueService;
         this.doDreamNoticeQueryService = doDreamNoticeQueryService;
+        this.icsService = icsService;
     }
 
     @Operation(summary = "두드림 공지 목록")
@@ -41,6 +44,16 @@ public class DoDreamController {
     @GetMapping("/notices")
     public DoDreamNoticesResponse getNotices() {
         return doDreamNoticeQueryService.getNotices();
+    }
+
+    @Operation(summary = "두드림 공지 필터 미리보기", description = "ICS 발급 전에 실제 달력에 포함될 두드림 공지 목록을 반환")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "성공"),
+            @ApiResponse(responseCode = "400", description = "잘못된 요청", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    @PostMapping("/notices/filter")
+    public DoDreamNoticesResponse previewFilteredNotices(@RequestBody IssueDoDreamIcsRequest request) {
+        return icsService.previewDoDreamNotices(request);
     }
 
     @Operation(summary = "두드림 ICS 발급", description = "구독 토큰·icsUrl·downloadUrl 반환")
