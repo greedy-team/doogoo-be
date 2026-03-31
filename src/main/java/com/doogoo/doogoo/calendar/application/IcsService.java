@@ -438,7 +438,7 @@ public class IcsService {
 
         result = result.replaceFirst("^\\[.*?\\]\\s*", "");
 
-        result = result.replaceFirst("^.*?20\\d{2}(?:학년도|년)?\\s*[-]?\\s*", "");
+        result = result.replaceFirst("^.*?20\\d{2}(?:학년도|년도|년)?\\s*[-]?\\s*", "");
 
         String[] target = {
                 "1학기", "2학기", "1 학기", "2 학기",
