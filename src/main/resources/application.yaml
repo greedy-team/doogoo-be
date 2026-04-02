@@ -14,7 +14,10 @@ management:
   endpoints:
     web:
       exposure:
-        include: health
+        include: health, prometheus
+  metrics:
+    tags:
+      application: doogoo-api
 
 crawl:
   dodream:
@@ -32,3 +35,4 @@ openai:
   api-key: ${OPENAI_API_KEY:dummy-key}
   model: gpt-4o-mini
   url: https://api.openai.com/v1/chat/completions
+
