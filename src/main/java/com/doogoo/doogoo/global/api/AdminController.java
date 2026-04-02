@@ -1,10 +1,12 @@
 package com.doogoo.doogoo.global.api;
 
+import com.doogoo.doogoo.calendar.application.IcsService;
 import com.doogoo.doogoo.crawl.CrawlScheduler;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+
 import java.time.LocalDate;
 
 @Tag(name = "Admin", description = "관리자 기능")
@@ -13,9 +15,11 @@ import java.time.LocalDate;
 public class AdminController {
 
     private final CrawlScheduler crawlScheduler;
+    private final IcsService icsService;
 
-    public AdminController(CrawlScheduler crawlScheduler) {
+    public AdminController(CrawlScheduler crawlScheduler, IcsService icsService) {
         this.crawlScheduler = crawlScheduler;
+        this.icsService = icsService;
     }
 
     @Operation(summary = "학사 일정 크롤링 (수동 실행)", description = "특정 연도의 학사 일정을 크롤링합니다.")
@@ -46,5 +50,12 @@ public class AdminController {
         crawlScheduler.regularCrawl();
     }
 
+    @Operation(summary = "공지 캐시 초기화", description = "두드림 및 학사 공지 캐시를 즉시 비웁니다.")
+    @PostMapping("/cache/clear")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void clearAllCaches() {
+        icsService.invalidateAcademicDataByUpdate();
+        icsService.invalidateDoDreamDataByUpdate();
+    }
 }
 
