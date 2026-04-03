@@ -3,6 +3,14 @@ spring:
     name: doogoo
   profiles:
     default: dev
+  datasource:
+    hikari:
+      maximum-pool-size: 30
+      connection-timeout: 30000
+
+app:
+  concurrency:
+    semaphore-count: 100
 
 cors:
   allowed-origins: "*"
@@ -35,4 +43,3 @@ openai:
   api-key: ${OPENAI_API_KEY:dummy-key}
   model: gpt-4o-mini
   url: https://api.openai.com/v1/chat/completions
-
