@@ -34,7 +34,10 @@ public class LogDto {
             String sourceType,
             String filterHash,
             Integer eventCount,
-            Long latencyMs
+            Long latencyMs,
+            Long pureRenderLatencyMs,
+            Integer queueLength,
+            String riskLevel
     ) {
     }
 
@@ -109,7 +112,8 @@ public class LogDto {
             Integer closedCount,
             Integer uniqueCount,
             Long latencyMs
-    ) {}
+    ) {
+    }
 
     public record FullSyncSummaryLog(
             String event,
@@ -118,7 +122,8 @@ public class LogDto {
             Integer skipAiCount,
             Integer targetCount,
             Long latencyMs
-    ) {}
+    ) {
+    }
 
     public record AcademicCrawlSummaryLog(
             String event,
@@ -126,12 +131,14 @@ public class LogDto {
             Integer year,
             Integer scheduleCount,
             Long latencyMs
-    ) {}
+    ) {
+    }
 
     public record CleanupSummaryLog(
             String event,
             String domain,
             Integer closedCount,
             Long latencyMs
-    ) {}
+    ) {
+    }
 }

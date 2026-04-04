@@ -192,20 +192,28 @@ public class IcsService {
         boolean acquired = false;
         long start = System.currentTimeMillis();
 
+        int queueLength = semaphore.getQueueLength();
+
         JsonLog.info(IcsService.class, new LogDto.IcsRenderLog(
                 "ics.render.start",
                 subscription.getToken(),
                 subscription.getSourceType().name(),
                 subscription.getFilterHash(),
                 null,
+                null,
+                null,
+                queueLength,
                 null
         ));
 
         try {
             semaphore.acquire();
             acquired = true;
+
+            long pureStart = System.currentTimeMillis();
             RenderResult rendered = render(subscription);
 
+            long pureLatency = System.currentTimeMillis() - pureStart;
             long latency = System.currentTimeMillis() - start;
             JsonLog.info(IcsService.class, new LogDto.IcsRenderLog(
                     "ics.render.complete",
@@ -213,7 +221,10 @@ public class IcsService {
                     subscription.getSourceType().name(),
                     subscription.getFilterHash(),
                     rendered.eventCount(),
-                    latency
+                    latency,
+                    pureLatency,
+                    queueLength,
+                    determineRiskLevel(queueLength, rendered.eventCount())
             ));
 
             return rendered.ics();
@@ -227,6 +238,11 @@ public class IcsService {
         }
     }
 
+    private String determineRiskLevel(int queue, int events) {
+        if (queue >= 150 || events >= 100) return "CRITICAL";
+        if (queue >= 50 || events >= 50) return "WARN";
+        return "SAFE";
+    }
 
     private void touch(String token) {
         subscriptionRepository.updateLastAccessedAtByToken(token, Instant.now());
