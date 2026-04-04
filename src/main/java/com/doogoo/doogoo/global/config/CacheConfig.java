@@ -18,7 +18,7 @@ public class CacheConfig {
     @Bean
     public Cache<String, String> icsCache() {
         return Caffeine.newBuilder()
-                .expireAfterWrite(12, TimeUnit.HOURS)
+                .expireAfterWrite(7, TimeUnit.DAYS)
                 .maximumSize(100000)
                 .recordStats()
                 .build();
