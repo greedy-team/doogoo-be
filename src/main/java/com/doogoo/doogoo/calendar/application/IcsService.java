@@ -45,6 +45,7 @@ public class IcsService {
     private static final int DEFAULT_ALARM_MINUTES = 60;
     private static final String KEY_ACADEMIC = "ACADEMIC";
     private static final String KEY_DODREAM = "DODREAM";
+    private static final String PREVIEW_DUMMY_TITLE = "100000";
 
     private final AcademicScheduleRepository academicScheduleRepository;
     private final EventRepository eventRepository;
@@ -163,7 +164,7 @@ public class IcsService {
         }
 
         List<AcademicNoticesResponse.NoticeItem> items = filtered.stream()
-                .map(this::toAcademicNoticeItem)
+                .map(this::toAcademicPreviewNoticeItem)
                 .toList();
         return new AcademicNoticesResponse(items);
     }
@@ -176,7 +177,7 @@ public class IcsService {
         }
 
         List<DoDreamNoticesResponse.NoticeItem> items = filtered.stream()
-                .map(this::toDoDreamNoticeItem)
+                .map(this::toDoDreamPreviewNoticeItem)
                 .toList();
         return new DoDreamNoticesResponse(items);
     }
@@ -411,10 +412,39 @@ public class IcsService {
         );
     }
 
+    private AcademicNoticesResponse.NoticeItem toAcademicPreviewNoticeItem(AcademicSchedule n) {
+        return new AcademicNoticesResponse.NoticeItem(
+                String.valueOf(n.getId()),
+                PREVIEW_DUMMY_TITLE,
+                n.getStartDate().atStartOfDay(),
+                n.getEndDate().atTime(23, 59),
+                List.of(n.getGradeId() == null ? AcademicSchedule.ALL_GRADE_ID : n.getGradeId())
+        );
+    }
+
     private DoDreamNoticesResponse.NoticeItem toDoDreamNoticeItem(Event event) {
         return new DoDreamNoticesResponse.NoticeItem(
                 "dodream-" + event.getDodreamId(),
                 event.getTitle(),
+                event.getDepartmentId() == null ? "all" : event.getDepartmentId(),
+                event.getDepartment(),
+                event.getApplyStart(),
+                event.getApplyEnd(),
+                event.getOperateStart(),
+                event.getOperateEnd(),
+                event.getLocation(),
+                event.getDescription(),
+                event.getDescriptionSummary(),
+                event.getMileage(),
+                event.getKeywordIds(),
+                event.getDodreamUrl()
+        );
+    }
+
+    private DoDreamNoticesResponse.NoticeItem toDoDreamPreviewNoticeItem(Event event) {
+        return new DoDreamNoticesResponse.NoticeItem(
+                "dodream-" + event.getDodreamId(),
+                PREVIEW_DUMMY_TITLE,
                 event.getDepartmentId() == null ? "all" : event.getDepartmentId(),
                 event.getDepartment(),
                 event.getApplyStart(),
