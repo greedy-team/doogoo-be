@@ -224,7 +224,7 @@ public class IcsService {
                     latency,
                     pureLatency,
                     queueLength,
-                    determineRiskLevel(queueLength, rendered.eventCount())
+                    determineRiskLevel(subscription.getSourceType(), queueLength, rendered.eventCount())
             ));
 
             return rendered.ics();
@@ -238,9 +238,13 @@ public class IcsService {
         }
     }
 
-    private String determineRiskLevel(int queue, int events) {
-        if (queue >= 150 || events >= 100) return "CRITICAL";
-        if (queue >= 50 || events >= 50) return "WARN";
+    private String determineRiskLevel(SourceType type, int queue, int events) {
+        if (queue >= 150) return "CRITICAL";
+        if (queue >= 50) return "WARN";
+        if (type == SourceType.DODREAM) {
+            if (events >= 100) return "CRITICAL";
+            if (events >= 50) return "WARN";
+        }
         return "SAFE";
     }
 
