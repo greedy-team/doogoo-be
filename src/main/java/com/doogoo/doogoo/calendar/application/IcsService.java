@@ -162,6 +162,7 @@ public class IcsService {
         if (filtered.isEmpty()) {
             filtered = all;
         }
+        filtered = limitPreviewToSingleAcademicNotice(filtered);
 
         List<AcademicNoticesResponse.NoticeItem> items = filtered.stream()
                 .map(this::toAcademicPreviewNoticeItem)
@@ -175,6 +176,7 @@ public class IcsService {
         if (filtered.isEmpty()) {
             filtered = all;
         }
+        filtered = limitPreviewToSingleDoDreamNotice(filtered);
 
         List<DoDreamNoticesResponse.NoticeItem> items = filtered.stream()
                 .map(this::toDoDreamPreviewNoticeItem)
@@ -400,6 +402,16 @@ public class IcsService {
             if (!match) return false;
         }
         return true;
+    }
+
+    private List<AcademicSchedule> limitPreviewToSingleAcademicNotice(List<AcademicSchedule> notices) {
+        if (notices.isEmpty()) return notices;
+        return List.of(notices.get(0));
+    }
+
+    private List<Event> limitPreviewToSingleDoDreamNotice(List<Event> notices) {
+        if (notices.isEmpty()) return notices;
+        return List.of(notices.get(0));
     }
 
     private AcademicNoticesResponse.NoticeItem toAcademicNoticeItem(AcademicSchedule n) {
