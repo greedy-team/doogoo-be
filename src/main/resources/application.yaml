@@ -5,12 +5,12 @@ spring:
     default: dev
   datasource:
     hikari:
-      maximum-pool-size: 50
+      maximum-pool-size: 70
       connection-timeout: 30000
 
 app:
   concurrency:
-    semaphore-count: 50
+    semaphore-count: 70
 
 cors:
   allowed-origins: "*"
