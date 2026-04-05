@@ -195,7 +195,7 @@ public class IcsService {
         boolean acquired = false;
         long start = System.currentTimeMillis();
 
-        int queueLength = semaphore.getQueueLength();
+
 
         JsonLog.info(IcsService.class, new LogDto.IcsRenderLog(
                 "ics.render.start",
@@ -205,7 +205,7 @@ public class IcsService {
                 null,
                 null,
                 null,
-                queueLength,
+                0,
                 null
         ));
 
@@ -213,6 +213,7 @@ public class IcsService {
             semaphore.acquire();
             acquired = true;
 
+            int queueLength = semaphore.getQueueLength();
             long pureStart = System.currentTimeMillis();
             RenderResult rendered = render(subscription);
 
@@ -242,11 +243,11 @@ public class IcsService {
     }
 
     private String determineRiskLevel(SourceType type, int queue, int events) {
-        if (queue >= 150) return "CRITICAL";
-        if (queue >= 50) return "WARN";
+        if (queue >= 50) return "CRITICAL";
+        if (queue >= 30) return "WARN";
         if (type == SourceType.DODREAM) {
-            if (events >= 50) return "CRITICAL";
-            if (events >= 30) return "WARN";
+            if (events >= 100) return "CRITICAL";
+            if (events >= 50) return "WARN";
         }
         return "SAFE";
     }
