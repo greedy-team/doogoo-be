@@ -245,8 +245,8 @@ public class IcsService {
         if (queue >= 150) return "CRITICAL";
         if (queue >= 50) return "WARN";
         if (type == SourceType.DODREAM) {
-            if (events >= 100) return "CRITICAL";
-            if (events >= 50) return "WARN";
+            if (events >= 50) return "CRITICAL";
+            if (events >= 30) return "WARN";
         }
         return "SAFE";
     }
