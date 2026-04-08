@@ -109,7 +109,7 @@ jobs:
             set -eu
 
             OK=0
-            for i in \$(seq 1 80); do
+            for i in \$(seq 1 150); do
               if /usr/bin/curl -fsS http://127.0.0.1:${APP_PORT_VALUE}/actuator/health; then
                 OK=1
                 break
@@ -142,7 +142,7 @@ jobs:
         shell: bash
         run: |
           OK=0
-          for i in $(seq 1 20); do
+          for i in $(seq 1 40); do
             if curl -k -fsS https://sejongdoogoo-api.com/actuator/health; then
               OK=1
               break
