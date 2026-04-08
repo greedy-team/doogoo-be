@@ -96,13 +96,8 @@ jobs:
             cp /tmp/doogoo-app.jar /opt/doogoo/green/app.jar
             cp /tmp/revision.txt /opt/doogoo/green/revision.txt
 
-            DOOGOO_GREEN_PORT=${APP_PORT_VALUE} /opt/doogoo/bin/stop-green.sh || true
+            DOOGOO_GREEN_PORT=${APP_PORT_VALUE} DOOGOO_ENV_FILE=/opt/doogoo/shared/.env /opt/doogoo/bin/stop-green.sh || true
             DOOGOO_GREEN_PORT=${APP_PORT_VALUE} DOOGOO_ENV_FILE=/opt/doogoo/shared/.env /opt/doogoo/bin/start-green.sh
-
-            echo 'proxy_pass http://127.0.0.1:${APP_PORT_VALUE};' | sudo -n tee /etc/nginx/doogoo-proxy-active.conf >/dev/null
-            echo green | sudo -n tee /etc/doogoo/active >/dev/null
-            sudo -n nginx -t
-            sudo -n systemctl reload nginx
           "
 
       - name: Check app health
@@ -127,6 +122,20 @@ jobs:
               echo 'App health check failed'
               exit 1
             fi
+          "
+
+      - name: Switch nginx to green
+        shell: bash
+        run: |
+          APP_PORT_VALUE="${APP_PORT:-50010}"
+
+          ssh $SSH_OPTIONS -i ~/.ssh/id_ed25519 -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" "
+            set -eu
+
+            echo 'proxy_pass http://127.0.0.1:${APP_PORT_VALUE};' | sudo -n tee /etc/nginx/doogoo-proxy-active.conf >/dev/null
+            echo green | sudo -n tee /etc/doogoo/active >/dev/null
+            sudo -n nginx -t
+            sudo -n systemctl reload nginx
           "
 
       - name: Check public health

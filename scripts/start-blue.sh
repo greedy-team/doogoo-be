@@ -24,6 +24,20 @@ if [ ! -f "$JAR" ]; then
   exit 1
 fi
 
+port_in_use() {
+  if command -v lsof >/dev/null 2>&1; then
+    lsof -tiTCP:"$BLUE_PORT" -sTCP:LISTEN >/dev/null 2>&1
+    return $?
+  fi
+
+  if command -v ss >/dev/null 2>&1; then
+    ss -ltn "( sport = :$BLUE_PORT )" 2>/dev/null | awk 'NR>1 {found=1} END {exit found ? 0 : 1}'
+    return $?
+  fi
+
+  return 1
+}
+
 if [ -f "$PID_FILE" ]; then
   PID=$(cat "$PID_FILE" 2>/dev/null || true)
   if [ -n "$PID" ] && kill -0 "$PID" 2>/dev/null; then
@@ -37,6 +51,11 @@ install -d -m 755 "$BLUE_DIR"
 cd "$BLUE_DIR" || exit 1
 
 export SPRING_PROFILES_ACTIVE="${SPRING_PROFILES_ACTIVE:-prod}"
+
+if port_in_use; then
+  log "port $BLUE_PORT is already in use"
+  exit 1
+fi
 
 nohup java $JAVA_OPTS -jar "$JAR" --server.port="$BLUE_PORT" >>"$LOG_FILE" 2>&1 &
 echo $! > "$PID_FILE"
