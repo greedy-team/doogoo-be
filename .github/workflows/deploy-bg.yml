@@ -33,20 +33,25 @@ jobs:
           ./gradlew test
 
       - name: Build app
-        run: ./gradlew bootJar -x test
+        run: ./gradlew clean bootJar -x test
 
       - name: Select executable jar
         shell: bash
         run: |
-          JAR_PATH=$(find build/libs -maxdepth 1 -type f -name "*.jar" ! -name "*-plain.jar" | head -n 1)
+          JAR_PATH=$(find build/libs -maxdepth 1 -type f -name "*.jar" ! -name "*-plain.jar" | sort | tail -n 1)
 
           if [ -z "$JAR_PATH" ]; then
             echo "Executable jar not found"
             exit 1
           fi
 
+          echo "Selected jar: $JAR_PATH"
+          sha256sum "$JAR_PATH"
+          git rev-parse HEAD
+
           mkdir -p jar-out
           cp "$JAR_PATH" jar-out/app.jar
+          git rev-parse HEAD > jar-out/revision.txt
 
       - name: Prepare SSH
         shell: bash
@@ -55,12 +60,15 @@ jobs:
           printf '%s' "${{ secrets.SSH_PRIVATE_KEY }}" | tr -d '\r' > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
 
-      - name: Upload jar
+      - name: Upload deploy artifacts
         shell: bash
         run: |
           scp $SSH_OPTIONS -i ~/.ssh/id_ed25519 -P "$SSH_PORT" \
             jar-out/app.jar \
             "$SSH_USER@$SSH_HOST:/tmp/doogoo-app.jar"
+          scp $SSH_OPTIONS -i ~/.ssh/id_ed25519 -P "$SSH_PORT" \
+            jar-out/revision.txt \
+            "$SSH_USER@$SSH_HOST:/tmp/revision.txt"
 
       - name: Upload scripts
         shell: bash
@@ -86,6 +94,7 @@ jobs:
             sudo -n chmod +x /opt/doogoo/bin/*.sh
 
             cp /tmp/doogoo-app.jar /opt/doogoo/green/app.jar
+            cp /tmp/revision.txt /opt/doogoo/green/revision.txt
 
             DOOGOO_GREEN_PORT=${APP_PORT_VALUE} /opt/doogoo/bin/stop-green.sh || true
             DOOGOO_GREEN_PORT=${APP_PORT_VALUE} DOOGOO_ENV_FILE=/opt/doogoo/shared/.env /opt/doogoo/bin/start-green.sh
